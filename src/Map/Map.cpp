@@ -1,986 +1,926 @@
-#include <fstream>
-#include <iostream>
-#include <stack>
-
 #include "Map.h"
-#include "../Player/Player.h"
-using namespace std;
 
-// Returns a string containing x amount of tab characters
-std::string string_tabs(int x)
+/**
+ * @brief Validates the map by checking if it is strongly connected and if each territory belongs to a continent.
+ *
+ * @return true If the map is valid.
+ * @return false Otherwise.
+ */
+bool Map::validate()
 {
-    // Create the empty string
-    string tabsString = "";
-
-    // Add the tab characters to the string
-    for(int i=0; i<x; i++)
-    {
-        tabsString += "\t";
-    }
-
-    return tabsString;
+    return isMapStronglyConnected() && isTerritories1to1Continents();
 }
 
-std::string remove_whitespace(std::string s)
+/**
+ * @brief Performs Depth First Search (DFS) on a given territory to check for connectivity.
+ *
+ * @param territory The starting territory for DFS.
+ * @param visited Vector storing the visited territories.
+ */
+void Map::DFS(Territory* territory, std::vector<Territory*> &visited)
 {
-    string s1="";
-    string whitespace="";
-
-    for(char c:s)
+    visited.push_back(territory);
+    for (auto adjacent : *territory->getAdjacentTerritories())
     {
-        // c is a leading whitespace
-        if(c==' ' && s1=="")
+        if (std::find(visited.begin(), visited.end(), adjacent) == visited.end())
         {
-            continue;
-        }
-        // c is not a leading whitespace
-        else if (c==' ' && s1!="")
-        {
-            whitespace+=c;
-        }
-        // c is not a whitespace
-        else if(c!=' ')
-        {
-            s1+=whitespace+c;
-            whitespace="";
+            DFS(adjacent, visited);
         }
     }
-
-    return s1;
 }
 
-// ==============================================================================
-// CONTINENT
-// ==============================================================================
-#pragma region Continent
-
-// Constructor
-Continent::Continent(const std::string& name, int bonus)
+/**
+ * @brief Checks if a territory is strongly connected to all other territories.
+ *
+ * @param territory The territory to check.
+ * @return true If the territory is strongly connected.
+ * @return false Otherwise.
+ */
+bool Map::isTerritoryStronglyConnected(Territory* territory)
 {
-    this->name = name;
-    this->bonus = bonus;
-    this->index = -1;
-    this->connectedContinents = std::vector<Continent *>();
+    std::vector<Territory *> visited{};
+    DFS(territory, visited);
+    return visited.size() == territories.size();
 }
 
-// Destructor
-Continent::~Continent()
+/**
+ * @brief Checks if the map as a whole is strongly connected.
+ *
+ * @return true If the map is strongly connected.
+ * @return false Otherwise.
+ */
+bool Map::isMapStronglyConnected()
 {
-    // Delete all the pointers to the connected continents
-    for(auto& continent : this->connectedContinents)
+    return std::all_of(territories.begin(), territories.end(), [this](
+            Territory* t)
     {
-        delete continent;
-    }
+        auto val = isTerritoryStronglyConnected(t);
+        return val;
+    });
 }
 
-// Sets the name of the continent
-void Continent::setName(std::string name)
+/**
+ * @brief Checks if each territory is assigned to a continent.
+ *
+ * @return true If all territories are assigned.
+ * @return false Otherwise.
+ */
+bool Map::isTerritories1to1Continents()
 {
-    this->name=name;
+    return std::all_of(continents.begin(), continents.end(), [](Continent *c){return !c->getTerritories()->empty();});
 }
 
-// Set the bonus of the continent
-void Continent::setBonus(int bonus)
+/**
+ * @brief Adds a continent to the map.
+ *
+ * @param continent Pointer to the continent to be added.
+ */
+void Map::addContinent(Continent *continent)
 {
-    this->bonus=bonus;
+    this->continents.push_back(continent);
 }
 
-// Adds an connected continent
-void Continent::addConnectedContinent(Continent *continent)
-{    
-    // Check if the continent is already in the vector, if it is, return
-    if(this->getConnectedContinent(continent->getName()) != nullptr)
-    {
-        return;
-    }
-
-    // If it isn't, add it to the connected continents
-    this->connectedContinents.push_back(continent);
+/**
+ * @brief Adds a territory to the map.
+ *
+ * @param territory Pointer to the territory to be added.
+ */
+void Map::addTerritory(Territory *territory)
+{
+    this->territories.push_back(territory);
 }
 
-// Returns the name of the continent
-std::string Continent::getName()
+// --------------------------------------------------
+// Getters
+// --------------------------------------------------
+/**
+ * @brief Get the name of the Map.
+ *
+ * @return std::string The name of the Map.
+ */
+std::string Map::getName()
 {
     return this->name;
 }
 
-// Returns the bonus of the continent
-int Continent::getBonus()
+/**
+ * @brief Get the image associated with the Map.
+ *
+ * @return std::string The image of the Map.
+ */
+std::string Map::getImage()
 {
-    return this->bonus;
+    return this->image;
 }
 
-void Continent::setIndex(int index)
+/**
+ * @brief Get the author of the Map.
+ *
+ * @return std::string The author of the Map.
+ */
+std::string Map::getAuthor()
 {
-    this->index = index;
+    return this->author;
 }
 
-int Continent::getIndex()
+/**
+ * @brief Get the wrap setting of the Map.
+ *
+ * @return bool The wrap setting of the Map.
+ */
+bool Map::getWrap() const
 {
-    return this->index;
+    return this->wrap;
 }
 
-std::vector<int> Continent::getConnectedContinentIndexes()
+/**
+ * @brief Get the scroll setting of the Map.
+ *
+ * @return bool The scroll setting of the Map.
+ */
+bool Map::getScroll() const
 {
-    vector<int> indexes;
-    for(auto& continent : this->connectedContinents)
-    {
-        indexes.push_back(continent->getIndex());
-    }
-    return indexes;
+    return this->scroll;
 }
 
-// Returns all connected continents
-std::vector<Continent *> Continent::getConnectedContinents()
+/**
+ * @brief Get the warn setting of the Map.
+ *
+ * @return bool The warn setting of the Map.
+ */
+bool Map::getWarn() const
 {
-    return this->connectedContinents;
+    return this->warn;
 }
 
-// Returns the continent with the given name, or nullptr if it doesn't exist
-Continent *Continent::getConnectedContinent(std::string continentName)
+/**
+ * @brief Get the territories of the Map.
+ *
+ * @return std::vector<Territory*>* Pointer to the vector of territories.
+ */
+std::vector<Territory*>* Map::getTerritories()
 {
-    // Loop through all the connected continents
-    for(auto& continent : this->connectedContinents)
-    {
-        // If the continent name matches the given name, return it
-        if(continent->getName() == continentName)
-        {
-            return continent;
-        }
-    }
-
-    // If it doesn't exist, return nullpt
-    return nullptr;
+    return &this->territories;
 }
 
-// Returns a string representation of the continent
-std::string Continent::to_string(int tabNum=0)
+/**
+ * @brief Get the continents of the Map.
+ *
+ * @return std::vector<Continent*>* Pointer to the vector of continents.
+ */
+std::vector<Continent*>* Map::getContinents()
 {
-    string continentString = string_tabs(tabNum) + "Continent:\n";
-    continentString += string_tabs(tabNum) + "{\n";
-    continentString += string_tabs(tabNum) + "\tName: " + this->name + "\n";
-    continentString += string_tabs(tabNum) + "\tBonus: "+ std::to_string(this->bonus) + "\n";    
-    continentString += string_tabs(tabNum) + "\tConnected Continents: \n";
- 
-    // Show only the name of all the connected continents
-    for(auto& continent : this->connectedContinents)
-    {
-        continentString += string_tabs(tabNum) + "\t\t- " + continent->getName() + "\n";
-    }
-
-    continentString += string_tabs(tabNum) + "}\n";
-
-    return continentString;
+    return &this->continents;
 }
 
-#pragma endregion
+// --------------------------------------------------
+// Setters
+// --------------------------------------------------
 
-// ==============================================================================
-// TERRITORY
-// ==============================================================================
-#pragma region Territory
-
-// Contructor
-Territory::Territory(const std::string& name, Continent* continent, int x, int y)
+/**
+ * @brief Set the name of the Map.
+ *
+ * @param _name New name for the Map.
+ */
+void Map::setName(std::string _name)
 {
-    this->name = name;
-    this->continent = continent;
-    this->x = x;
-    this->y = y;
-    this->index=-1;
-    this->connectedTerritories = std::vector<Territory *>();
-    this->connectedTerritoriesCount=0;
+    this->name = std::move(_name);
 }
 
-// Constructor
-Territory::Territory(const std::string &name)
+/**
+ * @brief Set the image for the Map.
+ *
+ * @param _image New image for the Map.
+ */
+void Map::setImage(std::string _image)
 {
-    this->name=name;
-    this->continent = nullptr;
-    this->x = 0;
-    this->y=0;
-    this->connectedTerritories = std::vector<Territory *>();
-    this->connectedTerritoriesCount=0;
+    this->image = std::move(_image);
 }
 
-// Destructor
-Territory::~Territory() 
+/**
+ * @brief Set the author of the Map.
+ *
+ * @param _author New author for the Map.
+ */
+void Map::setAuthor(std::string _author)
 {
-    // Delete all the pointers to the connected territories
-    for(auto& territory : this->connectedTerritories)
-    {
-        delete territory;
-    }
-
-    // Delete pointer to the continent
-    delete this->continent;
+    this->author = std::move(_author);
 }
 
-// Sets the name of the territory
-void Territory::setName(std::string name)
+/**
+ * @brief Set the wrap setting of the Map.
+ *
+ * @param _wrap New wrap setting.
+ */
+void Map::setWrap(bool _wrap)
 {
-    this->name = name;
+    this->wrap = _wrap;
 }
 
-// Set the continent of the territory
-void Territory::setContinent(Continent *continent)
+/**
+ * @brief Set the scroll setting of the Map.
+ *
+ * @param _scroll New scroll setting.
+ */
+void Map::setScroll(bool _scroll)
 {
-    this->continent = continent;
+    this->scroll = _scroll;
 }
 
-// Set the x coordinate of the territory
-void Territory::setX(int x)
+/**
+ * @brief Set the warn setting of the Map.
+ *
+ * @param _warn New warn setting.
+ */
+void Map::setWarn(bool _warn)
 {
-    this->x = x;
+    this->warn = _warn;
 }
 
-// Set the y coordinate of the territory
-void Territory::setY(int y)
-{
-    this->y = y;
+// --------------------------------------------------
+// Destructors + Constructors + Operator Overloads
+// --------------------------------------------------
+
+
+/**
+ * Destructor for the Map class.
+ * Responsible for releasing memory for territories and continents.
+ */
+Map::~Map() {
+  for(auto t : territories){
+    delete t;
+  }
+
+  for(auto c : continents){
+    delete c;
+  }
 }
 
-// Adds a connected territory
-void Territory::addConnectedTerritory(Territory *territory)
-{
-    // Check if the territory connections limit has been reached
-    if(this->connectedTerritoriesCount >= MAX_TERRITORY_CONNECTIONS)
-    {
-        // Show an error message and return
-        cout << "Territory connections limit has been reached!" << endl;
-        return;
-    }
 
-    // If it hasn't, add it to the connected territories
-    this->connectedTerritories.push_back(territory);
-    this->connectedTerritoriesCount++;
+/**
+ * Overloaded insertion operator for the Map class.
+ * @param stream The output stream.
+ * @param other The Map object to be displayed.
+ * @return Modified output stream.
+ */
+std::ostream &operator<<(std::ostream &stream, const Map &other) {
+  stream << "Map Name: " << other.name << '\n'
+  << "Map Author: " << other.author << '\n'
+  << "Map Image: " << other.image << '\n'
+  << "Map Wrap: " << (other.wrap ? "True":"False") << '\n'
+  << "Map Scroll: " << (other.scroll ? "Horizontal":"Vertical") << '\n'
+  << "Map Warn: " << (other.warn ? "True":"False") << '\n';
+
+  stream << "Map Continents: " << '\n';
+  for(auto c : other.continents){
+    stream << *c << '\n';
+  }
+
+  stream << "Map Territories: " << '\n';
+  for(auto t : other.territories){
+    stream << *t << '\n';
+  }
+
+  return stream;
 }
 
-// Sets the index of the territory within a map
-void Territory::setIndex(int index)
+/**
+ * Copy constructor for the Map class.
+ * Performs a deep copy.
+ * @param other The Map object to be copied.
+ */
+Map::Map(const Map &other)
+: name(other.name), author(other.author), warn(other.warn), scroll(other.scroll), image(other.image), wrap(other.wrap), game(other.game)
 {
-    this->index = index;
+  // deep copy
+  for(auto t : territories){
+    this->addTerritory(new Territory(*t));
+  }
+  // deep copy
+  for(auto c : continents){
+    this->addContinent(new Continent(*c));
+  }
+
 }
 
-// Returns the index of the territory within a map
-int Territory::getIndex()
-{
-    return this->index;
+/**
+ * Overloaded assignment operator for the Map class.
+ * @param other The Map object on the right of the assignment.
+ * @return A reference to the current Map after assignment.
+ */
+Map &Map::operator=(const Map &other) {
+  if(this == &other){
+    return *this;
+  }
+
+  this->name = other.name;
+  this->image = other.image;
+  this->author = other.author;
+
+  this->wrap = other.wrap;
+  this->scroll = other.scroll;
+  this->warn = other.warn;
+
+  this->continents = other.continents;
+  this->territories = other.territories;
+
+  this->game = other.game;
+
+  return *this;
 }
 
-// Returns the name of the territory
+/**
+ * Constructor for the Map class.
+ * Initializes a Map with a GameEngine.
+ * @param game Pointer to the GameEngine.
+ * @throws std::runtime_error If the GameEngine pointer is null.
+ */
+Map::Map(GameEngine* game)
+  :game(game)
+{
+  if(game == nullptr){throw std::runtime_error("Map::Error | Cannot set map Game Engine to null");}
+}
+
+/**
+ * Constructor for the Territory class.
+ * Initializes a Territory with a name.
+ * @param name The name of the territory.
+ */
+Territory::Territory(std::string name)
+    : name(std::move(name)), continent(nullptr), player(nullptr)
+{}
+
+/**
+ * Adds an adjacent territory.
+ * @param territory Pointer to the Territory to be added as adjacent.
+ */
+void Territory::addAdjacentTerritory(Territory* territory)
+{
+  this->adjacentTerritories.push_back(territory);
+}
+
+/**
+ * @brief Get the name of the Territory.
+ *
+ * @return std::string - Name of the Territory.
+ */
 std::string Territory::getName()
 {
     return this->name;
 }
 
-// Returns the continent of the territory
-Continent *Territory::getContinent()
+/**
+ * @brief Get the adjacent territories to the current Territory.
+ *
+ * @return std::vector<Territory *>* - Pointer to a vector containing adjacent territories.
+ */
+std::vector<Territory *>* Territory::getAdjacentTerritories()
 {
-    return this->continent;
+    return &this->adjacentTerritories;
 }
 
-// Returns the x coordinate of the territory
-int Territory::getX()
+/**
+ * @brief Get the X-coordinate of the Territory.
+ *
+ * @return int - X-coordinate of the Territory.
+ */
+int Territory::getX() const
 {
     return this->x;
 }
 
-// Returns the y coordinate of the territory
-int Territory::getY()
+/**
+ * @brief Get the Y-coordinate of the Territory.
+ *
+ * @return int - Y-coordinate of the Territory.
+ */
+int Territory::getY() const
 {
     return this->y;
 }
 
-// Returns all connected territories
-std::vector<Territory *> Territory::getConnectedTerritories()
+/**
+ * @brief Set the X-coordinate of the Territory.
+ *
+ * @param _x X-coordinate value.
+ */
+void Territory::setX(int _x)
 {
-    return this->connectedTerritories;
+    this->x = _x;
 }
 
-std::vector<int> Territory::getConnectedTerritoryIndexes()
+/**
+ * @brief Set the Y-coordinate of the Territory.
+ *
+ * @param _y Y-coordinate value.
+ */
+void Territory::setY(int _y)
 {
-    vector<int> indexes;
-    for(auto& territory : this->connectedTerritories)
-    {
-        indexes.push_back(territory->getIndex());
-    }
-    return indexes;
+    this->y = _y;
 }
 
-// Returns a string representation of the territory
-std::string Territory::to_string(int tabNum=0)
+/**
+ * @brief Get the Continent to which the Territory belongs.
+ *
+ * @return Continent* - Pointer to the Continent object.
+ */
+Continent* Territory::getContinent()
 {
-    string territoryString = string_tabs(tabNum) + "Territory:\n";
-    territoryString += string_tabs(tabNum) + "{\n";
-    
-    territoryString += string_tabs(tabNum) + "\tName: " + this->name + "\n";
-    territoryString += string_tabs(tabNum) + "\tContinent: " + this->continent->getName() + "\n";
-    territoryString += string_tabs(tabNum) + "\tX: " + std::to_string(this->x) + "\n";
-    territoryString += string_tabs(tabNum) + "\tY: " + std::to_string(this->y) + "\n";
-    territoryString += string_tabs(tabNum) + "\tConnected Territories: \n";
-    
-    for(auto& territory : this->connectedTerritories)
-    {
-        territoryString += string_tabs(tabNum) + "\t\t - " + territory->getName() + "\n";
-    }
-
-    territoryString += string_tabs(tabNum) + "\t}";
-
-    return territoryString;
+    return this->continent;
 }
 
-#pragma endregion
-
-// ==============================================================================
-// MAP
-// ==============================================================================
-#pragma region Map
-
-// Constructor
-Map::Map()
+/**
+ * @brief Assign the Territory to a Continent.
+ *
+ * @param c Pointer to the Continent object.
+ */
+void Territory::setContinent(Continent* c)
 {
-    this->author = "";
-    this->image = "";
-    this->scroll = "";
-    this->warn = "";
-    this->wrap = "";
-    this->continents = std::vector<Continent *>();
-    this->territories = std::vector<Territory *>();
-    this->continentsCount = 0;
-    this->territoriesCount = 0;
+    this->continent = c;
 }
 
-// Destructor
-Map::~Map()
-{
-    // Delete all the territories pointers
-    for(auto& territory : this->territories)
-    {
-        delete territory;
-    }
+/**
+ * @brief Default copy constructor for the Territory class.
+ *
+ * @param other The Territory object to be copied from.
+ */
+Territory::Territory(const Territory &other)= default;
 
-    // Delete all the continents pointers
-    for(auto& continent : this->continents)
-    {
-        delete continent;
-    }
+/**
+ * @brief Overloaded assignment operator for deep copying of the Territory class.
+ *
+ * Checks for self-assignment, and if not, copies all attributes from the provided Territory to the current instance.
+ *
+ * @param other The Territory object to be assigned from.
+ * @return Territory& - Reference to the current instance post-assignment.
+ */
+Territory& Territory::operator=(const Territory &other) {
+  if(this == &other){
+    return *this;
+  }
+
+  this->name = other.name;
+  this->continent = other.continent;
+  this->player = other.player;
+
+  this->armies = other.armies;
+  this->ownerId = other.ownerId;
+
+  this->x = other.x;
+  this->y = other.y;
+
+  this->adjacentTerritories = other.adjacentTerritories;
+  return *this;
 }
 
-// Sets the author of the map
-void Map::setAuthor(std::string author)
-{
-    this->author = author;
+/**
+ * @brief Overloaded stream insertion operator for Territory.
+ *
+ * @param stream Output stream.
+ * @param other Territory object.
+ * @return std::ostream& - Reference to the modified stream.
+ */
+std::ostream &operator<<(std::ostream &stream, const Territory &other) {
+  stream << "Territory Name: " << other.name << '\n'
+         << "Territory Coordinates: " << '(' << other.x << ", " << other.y << ')' << '\n'
+         << "Territory Continent: " << other.continent << '\n';
+  return stream ;
 }
 
-// Sets the image of the map
-void Map::setImage(std::string image)
-{
-    this->image = image;
+/**
+ * @brief Set the ID of the owner of the Territory.
+ *
+ * @param id Owner's ID.
+ */
+void Territory::setOwnerId(int id) {
+  this->ownerId = id;
 }
 
-// Sets the scroll value of the map
-void Map::setScroll(std::string scroll)
-{
-    this->scroll = scroll;
+/**
+ * @brief Get the owner's ID for the Territory.
+ *
+ * @return int - Owner's ID.
+ */
+int Territory::getOwnerId() const {
+  return this->ownerId;
 }
 
-// Sets the warning value of the map
-void Map::setWarn(std::string warn)
-{
-    this->warn = warn;
+/**
+ * @brief Get the number of armies in the Territory.
+ *
+ * @return int - Number of armies.
+ */
+int Territory::getArmies() const {
+  return this->armies;
 }
 
-// Sets the wrap value of the map
-void Map::setWrap(std::string wrap)
-{
-    this->wrap = wrap;
+/**
+ * @brief Set the number of armies in the Territory.
+ *
+ * @param army_units Number of armies.
+ */
+void Territory::setArmies(int army_units) {
+  this->armies = army_units;
 }
 
-// Adds a continent to the map
-void Map::addContinent(Continent *continent)
-{
-    // Check the maximum number of continents has not been reached
-    if(this->continentsCount>=MAX_CONTINENTS)
-    {
-        // Show an error message and return
-        cout << "Maximum number of continents reached!" << endl;
-        return;
-    }
-
-    // If it hasn't, add it to the continents
-    continent->setIndex(this->continentsCount);
-    this->continents.push_back(continent);
-    this->continentsCount++;
+/**
+ * @brief Removes a specified number of army units from the territory.
+ *
+ * @param removed The number of army units to remove.
+ * @return int The total number of army units after removal.
+ * @exception std::runtime_error If trying to remove a negative number of units or more units than present.
+ */
+int Territory::removeArmyUnits(int removed) {
+  if(removed < 0){ throw std::runtime_error("Cannot remove a negative amount of army units."); }
+  int total = this->armies - removed;
+  if(total < 0){ throw std::runtime_error("Cannot remove more armies than the territory currently has."); }
+  this->armies = total;
+  return total;
 }
 
-// Adds a territory to the map
-void Map::addTerritory(Territory *territory)
-{
-    // Check the maximum number of territories has not been reached
-    if(this->territoriesCount>=MAX_TERRITORIES)
-    {
-        // Show an error message and return
-        cout << "Maximum number of territories reached!" << endl;
-        return;
-    }
 
-    // If it hasn't, add it to the territories
-    territory->setIndex(this->territoriesCount);
-    this->territories.push_back(territory);
-    this->territoriesCount++;
+/**
+ * @brief Adds a specified number of army units to the territory.
+ *
+ * @param added The number of army units to add.
+ * @return int The total number of army units after addition.
+ * @exception std::runtime_error If trying to add a negative number of units.
+ */
+int Territory::addArmyUnits(int added) {
+  if(added < 0){ throw std::runtime_error("Cannot add a negative amount of army units."); }
+  int total = this->armies + added;
+  this->armies = total;
+  return total;
 }
 
-// Returns a continent by name
-Continent *Map::getContinent(std::string name)
+/**
+ * @brief Get the player who owns the territory.
+ *
+ * @return Player* Pointer to the owning player.
+ */
+Player *Territory::getPlayer() {
+  return this->player;
+}
+
+/**
+ * @brief Assign a player as the owner of the territory.
+ *
+ * @param p Pointer to the player object.
+ */
+void Territory::setPlayer(Player* p) {
+  this->player = p;
+}
+
+/**
+ * @brief Continent constructor initializing the continent with a name and bonus.
+ *
+ * @param name Name of the continent.
+ * @param bonus Army bonus provided by the continent.
+ */
+Continent::Continent(std::string name, int bonus)
 {
-    // Iterate through each continent
-    for(auto& continent : this->continents)
-    {
-        // If the name matches, return the continent
-        if(continent->getName()==name)
+  this->name = std::move(name);
+  this->bonus = bonus;
+}
+
+
+/**
+ * @brief Add a territory to the continent's list of territories.
+ *
+ * @param territory Pointer to the territory to add.
+ */
+void Continent::addTerritory(Territory* territory)
+{
+  this->territories.push_back(territory);
+}
+
+/**
+ * @brief Get the name of the continent.
+ *
+ * @return std::string The name of the continent.
+ */
+std::string Continent::getName()
+{
+  return this->name;
+}
+
+/**
+ * @brief Get the army bonus provided by the continent.
+ *
+ * @return int Army bonus value.
+ */
+int Continent::getBonus() const
+{
+  return this->bonus;
+}
+
+/**
+ * @brief Get a list of territories belonging to the continent.
+ *
+ * @return std::vector<Territory*>* Pointer to the list of territories.
+ */
+std::vector<Territory*>* Continent::getTerritories()
+{
+  return &this->territories;
+}
+
+/**
+ * @brief Overloaded stream insertion operator for displaying continent details.
+ *
+ * @param stream The output stream.
+ * @param other The continent object to display.
+ * @return std::ostream& Reference to the modified output stream.
+ */
+std::ostream &operator<<(std::ostream &stream, const Continent &other) {
+  stream << "Continent Name: " << other.name << '\n'
+         << "Continent Bonus: " << other.bonus << '\n';
+
+  stream << "Continent Territories: " << '\n';
+  for(auto t: other.territories){
+    stream << (*t) << '\n';
+  }
+  return stream;
+}
+
+/**
+ * @brief Overloaded assignment operator for deep copying of the Continent class.
+ *
+ * @param other The Continent object to be assigned from.
+ * @return Continent& - Reference to the current instance post-assignment.
+ */
+Continent &Continent::operator=(const Continent &other) {
+  if(&other == this){
+    return *this;
+  }
+  this->name = other.name;
+  this->bonus = other.bonus;
+  this->territories = other.territories;
+
+  return *this;
+}
+
+/**
+ * @brief Default copy constructor for the Continent class.
+ *
+ * @param other The Continent object to be copied from.
+ */
+Continent::Continent(const Continent &other) = default;
+
+/**
+ * @brief Loads a map from a file into a Map object.
+ *
+ * @param path Path to the map file.
+ * @param out_map Pointer to the Map object to populate with data.
+ * @exception std::runtime_error If the map file cannot be opened or there are issues during reading.
+ */
+void MapLoader::load(const std::string& path, Map* out_map)
+{
+  std::ifstream input_file(path, std::ios::in);
+  std::string line;
+
+  // check if file is open
+  if (!input_file.is_open())
+  {
+    throw std::runtime_error("Could not open file: " + path);
+  }
+
+  MapLoaderState state;
+
+  std::string map_name = path.substr(path.find_last_of('/') + 1);
+  out_map->setName(map_name);
+
+  while (getline(input_file, line))
+  {
+    line = trim(line);
+    if(line.empty()) { continue; }
+
+    parseLine(line, out_map, state);
+  }
+
+  state.parseState = ReadingState_Idle;
+  input_file.close();
+}
+
+/**
+ * @brief Parse a line from the map file and update the map data accordingly.
+ *
+ * @param line The line from the map file.
+ * @param map Pointer to the Map object to update.
+ * @param mapLoaderState Current state of the map loader.
+ * @exception std::runtime_error If there are formatting or parsing issues in the map file.
+ */
+void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoaderState)
+{
+
+  switch (mapLoaderState.parseState)
+  {
+    case ReadingState_Idle:
+      if (line == "[Map]")
+      {
+        mapLoaderState.parseState = ReadingState_Map;
+      }
+      else
+      {
+        throw std::runtime_error("Invalid map file");
+      }
+      break;
+
+    case ReadingState_Map:
+      if (line == "[Continents]")
+      {
+        mapLoaderState.parseState = ReadingState_Continents;
+      }
+      else
+      {
+        std::string delimiter = "=";
+        if (line.find(delimiter) != std::string::npos)
         {
-            return continent;
+          std::string key = line.substr(0, line.find(delimiter));
+          std::string value = line.substr(line.find(delimiter) + 1, line.length());
+          if (key == "author")
+          {
+            map->setAuthor(value);
+          }
+          else if (key == "image")
+          {
+            map->setImage(value);
+          }
+          else if (key == "wrap")
+          {
+            map->setWrap(value == "yes");
+          }
+          else if (key == "scroll")
+          {
+            map->setScroll(value == "horizontal");
+          }
+          else if (key == "warn")
+          {
+            map->setWarn(value == "yes");
+          }
         }
-    }    
+      }
+      break;
 
-    // If no continent was found, return a null pointer
-    return nullptr;
-}
-
-// Returns a territory by name
-Territory *Map::getTerritory(std::string name)
-{
-    // Iterate through each territory
-    for(auto& territory : this->territories)
-    {
-        // If the name matches, return the territory
-        if(territory->getName()==name)
+    case ReadingState_Continents:
+      if (line == "[Territories]")
+      {
+        mapLoaderState.parseState = ReadingState_Territories;
+      }
+      else
+      {
+        // parse continents
+        std::string delimiter = "=";
+        if (line.find(delimiter) != std::string::npos)
         {
-            return territory;
+          std::string name = line.substr(0, line.find(delimiter));
+          std::string value = line.substr(line.find(delimiter) + 1, line.length());
+          Continent* continent;
+          try {
+            continent = new Continent(name, std::stoi(value));
+          } catch (std::invalid_argument& e){
+            throw std::runtime_error("Map Formatting Error: Invalid Continent Bonus.");
+          } catch (std::out_of_range& e) {
+            throw std::runtime_error("Map Formatting Error: Continent Bonus Coordinate Out Of Range.");
+          }
+
+          map->addContinent(continent);
+          mapLoaderState.continents[name] = continent;
         }
-    }
-    // If no territory was found, return a null pointer
-    return nullptr;
-}
+      }
+      break;
+      // FORMAT: Territory name, x, y, continent, adjacent territories
+    case ReadingState_Territories:
 
-// Returns all the continents in the map
-std::vector<Continent *> Map::getContinents()
-{
-    return this->continents;
-}
+      // parse territories
+      std::string delimiter = ",";
+      // Territory
+      Territory* territory = nullptr;
 
-// Returns all the territories in the map
-std::vector<Territory *> Map::getTerritories()
-{
-    return this->territories;
-}
+      if (line.find(delimiter) != std::string::npos)
+      {
+        std::string name = line.substr(0, line.find(delimiter));
+        line = line.substr(line.find(delimiter) + 1, line.length());
 
-
-bool Map::validate()
-{
-    // Check that the map is a connected graph
-    // Check that continants are connected subgraphs
-    // Check that each territory belongs to one and only one continent 
-    
-    return validateTerritoriesInContinents() && validateTerritoryConnections() && validateContinentConnections();
-}
-
-
-// Returns a string representation of the map
-std::string Map::to_string(int tabNum=0)
-{
-    string mapString = string_tabs(tabNum) + "Map:\n";
-    mapString += string_tabs(tabNum) + "{\n";
-    mapString += string_tabs(tabNum) + "\tAuthor: " + this->author + "\n";
-    mapString += string_tabs(tabNum) + "\tWrap: " + this->wrap  + "\n";
-    mapString += string_tabs(tabNum) + "\tScroll: " + this->scroll + "\n";
-    mapString += string_tabs(tabNum) + "\tImage: " + this->image + "\n";
-    mapString += string_tabs(tabNum) + "\tWarn: " + this->warn + "\n";
-
-    mapString += string_tabs(tabNum) + "\tContinents:";
-    mapString += "\t{\n";
-    for(auto& continent : this->continents)
-    {
-        mapString += continent->to_string(tabNum+1) + "\n"; 
-    }
-    mapString += string_tabs(tabNum) + "\t}\n";
-    
-    mapString += string_tabs(tabNum) + "\tTerritories:{\n";
-    for(auto& territory : this->territories)    
-    {
-        mapString += territory->to_string(tabNum+1) + "\n";
-    }
-    mapString += string_tabs(tabNum) + "\t}\n";
-    
-    mapString += string_tabs(tabNum) + "\tNumber of Continents: " + std::to_string(this->continentsCount) + "\n";
-    mapString += string_tabs(tabNum) + "\tNumber of Territories: " + std::to_string(this->territoriesCount) + "\n";
-    mapString += string_tabs(tabNum) + "}";
-
-    return mapString;
-}
-
-// Checks that all the territories are in a continent
-bool Map::validateTerritoriesInContinents()
-{
-    // Check that all territories are in a continent
-    for(auto& territory: this->territories)
-    {
-        // If the territory doesn't have a continent, return false
-        if(dynamic_cast<Continent *>(territory->getContinent())==nullptr)
+        // check if territory exists in territoriesToCreate before creating a new one
+        if (mapLoaderState.territoriesToCreate.find(name) != mapLoaderState.territoriesToCreate.end())
         {
-            return false;
+          territory = mapLoaderState.territoriesToCreate[name];
+          // remove from territoriesToCreate
+          mapLoaderState.territoriesToCreate.erase(name);
         }
-    }
-
-    return true;
-}
-
-bool Map::validateTerritoryConnections()
-{
-    // Tracks the visited territories
-    vector<bool> visited(this->territories.size(), false);
-    
-    // Tracks the territories that have not yet been visited
-    stack<int> territoryStack;
-
-    // Tracks the current territory that is being visited
-    int currentTerritoryIndex = 0;
-
-    // Start with the first territory
-    territoryStack.push(currentTerritoryIndex);
-
-    // Loop until all territories have been visited
-    while (!territoryStack.empty())
-    {
-        // Get the next territory to visit
-        currentTerritoryIndex = territoryStack.top();
-        territoryStack.pop();
-
-        // Set the current territory as visited
-        visited[currentTerritoryIndex] = true;
-
-        // Add all the unvisited connected territories to the stack
-        for(auto& connectedTerritoryIndex: this->territories[currentTerritoryIndex]->getConnectedTerritoryIndexes())
+        else
         {
-            // If the connected territory has not been visited, add it to the stack
-            if(!visited[connectedTerritoryIndex])
-            {
-                territoryStack.push(connectedTerritoryIndex);
+          territory = new Territory(name);
+        }
+      }
+
+      // parse the rest of the line
+      while (!line.empty())
+      {
+        auto delimiter_location = line.find(delimiter);
+        std::string value = line.substr(0, delimiter_location);
+        line = delimiter_location == std::string::npos ? "" : line.substr(delimiter_location + 1, line.length());
+
+        // x
+        if (territory->getX() == -1)
+        {
+          try{
+            territory->setX(std::stoi(value));
+          } catch (std::invalid_argument& e){
+            throw std::runtime_error("Map Formatting Error: Invalid X Coordinate.");
+          } catch (std::out_of_range& e) {
+            throw std::runtime_error("Map Formatting Error: X Coordinate Out Of Range.");
+          }
+          continue;
+        }
+          // y
+        else if (territory->getY() == -1)
+        {
+          try{
+            territory->setY(std::stoi(value));
+          } catch (std::invalid_argument& e){
+            throw std::runtime_error("Map Formatting Error: Invalid Y Coordinate.");
+          } catch (std::out_of_range& e) {
+            throw std::runtime_error("Map Formatting Error: Y Coordinate Out Of Range.");
+          }
+          continue;
+        }
+          // continent
+        else if (territory->getContinent() == nullptr)
+        {
+          // check if continents exists in hashmap
+          if (mapLoaderState.continents.find(value) == mapLoaderState.continents.end())
+          {
+            throw std::runtime_error("Invalid continent: " + value);
+          }
+          else
+          {
+            territory->setContinent(mapLoaderState.continents[value]);
+            mapLoaderState.continents[value]->addTerritory(territory);
+          }
+          continue;
+        }
+          // adjacent territories
+        else
+        {
+          // check if territory exists in hashmap
+          if (mapLoaderState.territories.find(value) != mapLoaderState.territories.end())
+          {
+            territory->addAdjacentTerritory(mapLoaderState.territories[value]);
+          }
+          else
+          {
+            Territory* adjacentTerritory;
+            // check inside territories to create
+            if(mapLoaderState.territoriesToCreate.find(value) != mapLoaderState.territoriesToCreate.end()){
+              // use previously created
+              adjacentTerritory = mapLoaderState.territoriesToCreate[value];
+            } else {
+              // create new territory
+              adjacentTerritory = new Territory(value);
             }
+            territory->addAdjacentTerritory(adjacentTerritory);
+            // add to territoriesToCreate
+            mapLoaderState.territoriesToCreate[value] = adjacentTerritory;
+          }
         }
-    }
-    
-    // Validate that all territories have been visited, meaning that the graph is connected
-    for(int i=0; i<visited.size(); i++)
-    {
-        if(!visited[i])
-        {
-            return false;
-        }
-    }
-
-    return true;
+      }
+      mapLoaderState.territories[territory->getName()] = territory;
+      map->addTerritory(territory);
+      break;
+  }
 }
 
-bool Map::validateContinentConnections()
+/**
+ * @brief Utility function to trim leading whitespace from a string.
+ *
+ * @param s Input string.
+ * @return std::string Trimmed string.
+ */
+std::string MapLoader::ltrim(const std::string &s)
 {
-    // Tracks the visited continents
-    vector<bool> visited(this->continents.size(), false);
-    
-    // Tracks the continents that have not yet been visited
-    stack<int> continentStack;
-
-    // Tracks the current continent that is being visited
-    int currentContinentIndex = 0;
-
-    // Start with the first continent
-    continentStack.push(currentContinentIndex);
-
-    // Loop until all continents have been visited
-    while (!continentStack.empty())
-    {
-        // Get the next continent to visit
-        currentContinentIndex = continentStack.top();
-        continentStack.pop();
-
-        // Set the current continent as visited
-        visited[currentContinentIndex] = true;
-
-        // Add all the unvisited connected continents to the stack
-        for(auto& connectedContinentIndex: this->continents[currentContinentIndex]->getConnectedContinentIndexes())
-        {
-            // If the connected continent has not been visited, add it to the stack
-            if(!visited[connectedContinentIndex])
-            {
-                continentStack.push(connectedContinentIndex);
-            }
-        }
-    }
-    
-    // Validate that all continents have been visited, meaning that the graph is connected
-    for(int i=0; i<visited.size(); i++)
-    {
-        if(!visited[i])
-        {
-            return false;
-        }
-    }
-
-    return true;
+  size_t start = s.find_first_not_of(" \n\r\t\f\v");
+  return (start == std::string::npos) ? "" : s.substr(start);
 }
 
-#pragma endregion
-
-// ==============================================================================
-// MAP LOADER
-// ==============================================================================
-#pragma region Map Loader
-
-// Constructor
-MapLoader::MapLoader()
+/**
+ * @brief Utility function to trim trailing whitespace from a string.
+ *
+ * @param s Input string.
+ * @return std::string Trimmed string.
+ */
+std::string MapLoader::rtrim(const std::string &s)
 {
-    this->map = new Map();
+  size_t end = s.find_last_not_of(" \n\r\t\f\v");
+  return (end == std::string::npos) ? "" : s.substr(0, end + 1);
 }
 
-// Destructor
-MapLoader::~MapLoader()
-{
-    // Delete the pointer to the map
-    delete this->map;
+/**
+ * @brief Utility function to trim both leading and trailing whitespace from a string.
+ *
+ * @param s Input string.
+ * @return std::string Trimmed string.
+ */
+std::string MapLoader::trim(const std::string &s) {
+  return rtrim(ltrim(s));
 }
-
-// Creates a map object from a map file, given the path to the file
-Map *MapLoader::loadMap(const std::string& mapFilePath)
-{
-    // Tracks the current line that is being read
-    string line {};
-    // Stream to read the file 
-    ifstream mapFile (mapFilePath);
-    // Tracks the current section of the file
-    mapSections section = none;
-    // Tracks the number of sections found in the file. It should be 3.
-    int sectionsCount = 0;
-    
-    // Open the file
-    if(mapFile.is_open())
-    {
-        // Iterate through each line of the file
-        while (getline(mapFile, line))
-        {
-            // The Map section has been reached
-            if(line=="[Map]")
-            {
-                section = mapSection;
-                sectionsCount++;
-            }
-            // The Continents section has been reached
-            else if(line=="[Continents]")
-            {
-                section = continentsSection;
-                sectionsCount++;
-            }
-            // The Territories section has been reached
-            else if(line=="[Territories]")
-            {
-                section = territoriesSection;
-                sectionsCount++;
-            }
-            // Reading a line belonging to one of the 3 sections
-            else if(line!="" && section!=none)
-            {
-                switch (section)
-                {
-                    // Extract the map settings from the Map section
-                    case mapSection:
-                        extractMapSetting(line);
-                        break;
-                    // Extract the continents from the Continents section
-                    case continentsSection:
-                        extractContinent(line);
-                        break;
-                    // Extract the territories from the Territories section
-                    case territoriesSection:
-                        extractTerritory(line);
-                        break;
-                    default:
-                        break;
-                }
-            }   
-        }
-        // Close the file after reading it
-        mapFile.close();
-    }
-    else
-    {
-        // Show an error message if the file is not found
-        cout << "Unable to open file!"<<endl;
-    }
-
-    // Check if the file is a valid map file
-    if(sectionsCount!=3 || section==none)
-    {
-        cout << "The file is not a valid map file!" << endl;
-        return nullptr;
-    }
-
-    // For each continent, set their connected continents
-    this->connectContinents();
-
-    // Return a pointer to the map
-    return this->map;
-}
-
-// Extracts the territory details represented by each line under the Territories section
-void MapLoader::extractTerritory(const std::string &line)
-{
-    // Current territory
-    Territory *territory;
-    // Current connected territory
-    Territory *connectedTerritory;
-
-    // Current territory name, continent name, x and y coordinate
-    string territoryName {};
-    string continentName {};
-    string x {};
-    string y {};
-    
-    // Current connected territory name
-    string connectedTerritoryName {};
-    
-    // Delimiter between values
-    char delimiter = ',';
-    
-    // True when all values for the current territory are extracted
-    bool isMainTerritory = false;
-
-    // True when the delimiter has been encountered for the current value
-    bool isNewVal = false;
-    // Counts the number of values read. The first 4 values are reserved for the territory details
-    int newValCounter = 0;
-    
-    // Iterate through each character of the line
-    for(int i=0; i<line.length(); i++)
-    {
-        // Delimiter is found, move to next value
-        if(line[i]==delimiter)
-        {
-            newValCounter++;
-            isNewVal = true;
-            continue;
-        }
-
-        switch (newValCounter)
-        {
-            // The current value belongs to the territory name
-            case 0:
-                territoryName += line[i];
-                break;
-            // The current value belongs to the x coordinate
-            case 1:
-                x+=line[i];
-                break;
-            // The current value belongs to the y coordinate
-            case 2:
-                y+=line[i];
-                break;
-            // The current value belongs to the continent name
-            case 3:
-                continentName+=line[i];
-                isMainTerritory = true;
-                break;
-            default:
-                // Add the Territory details to the map for which the current line refers to
-                if(isMainTerritory)
-                {
-                    // Add the territory details to the map
-                    territory = addMainTerritory(remove_whitespace(territoryName), remove_whitespace(continentName), stoi(x), stoi(y));
-
-                    // Prevent the territory from being added twice
-                    isMainTerritory=false;
-                    isNewVal=false;
-                }
-
-                // Connect the connected territory to the main one
-                if(isNewVal)
-                {
-                    // Get/Add the connected territory
-                    connectedTerritory = addConnectedTerritory(remove_whitespace(connectedTerritoryName));
-                    territory->addConnectedTerritory(connectedTerritory);
-
-                    // Reset the territory name
-                    connectedTerritoryName = "";
-                    isNewVal=false;
-                }
-
-                connectedTerritoryName+=line[i];
-
-                break;
-        }
-    }
-
-    // Make sure to connect the last territory if needed
-    if(connectedTerritoryName!="")
-    {
-        // Get/Add the connected territory
-        connectedTerritory = addConnectedTerritory(remove_whitespace(connectedTerritoryName));
-
-        // Connect the territories
-        territory->addConnectedTerritory(connectedTerritory);
-    }
-}
-
-// Extracts the continents represented by each line under the Continents section
-void MapLoader::extractContinent(const std::string &line)
-{
-    // Extract the name and bonus from the line
-    string continentName {};
-    string continentBonus {};
-
-    // delimiter between the name and bonus
-    string delimiter = "=";
-    
-    // Find the delimiter index
-    int  delimiterIndex = line.find(delimiter);
-
-    // Iterate through each character of the line
-    for(int i=0; i<line.length(); i++)
-    {
-        // Add the character to the continent name
-        if(i<delimiterIndex)
-        {
-            continentName += line[i];
-        }
-        // Add the character to the continent bonus
-        else if(i>delimiterIndex)
-        {
-            continentBonus += line[i];
-        }
-    }
-
-    // Create a new continent and add it to the map
-    this->map->addContinent(new Continent(remove_whitespace(continentName), stoi(continentBonus)));
-}
-
-// Extracts the settings represented by each line under the Map section
-void MapLoader::extractMapSetting(const std::string &line)
-{
-    // Extract the key and value from the line
-    string key {};
-    string value {};
-
-    // delimiter between the key and value
-    string delimiter = "="; 
-    
-    // Find the delimiter index
-    int delimiterIndex = line.find(delimiter);
-
-    // Iterate through each character of the line
-    for(int i=0; i<line.length(); i++)
-    {
-        // Add the character to the key
-        if(i<delimiterIndex)
-        {
-            key += tolower(line[i]);
-        }
-        // Add the character to the value
-        else if(i>delimiterIndex)
-        {
-            value += line[i];
-        }
-    }
-
-    // Set the map setting value for the specified key
-    if(key=="author")
-    {
-        this->map->setAuthor(value);
-    }
-    else if(key=="warn")
-    {
-        this->map->setWarn(value);
-    }
-    else if(key=="image")
-    {
-        this->map->setImage(value);
-    }
-    else if(key=="wrap")
-    {
-        this->map->setWrap(value);
-    }
-    else if(key=="scroll")
-    {
-        this->map->setScroll(value);
-    }
-}
-
-// Adds/Modifies a territory, with its name, continent and position in the map
-Territory* MapLoader::addMainTerritory(const std::string &territoryName, const std::string &continentName, int x, int y)
-{
-    // Get the continent to which the territory belongs
-    Continent *continent = this->map->getContinent(continentName);  
-    
-    // Check if the territory already exists
-    Territory *territory = this->map->getTerritory(territoryName);
-
-    // If the territory does not exist, create a new one and add it to the map
-    if(territory==nullptr)
-    {
-        territory = new Territory(territoryName, continent, x, y);
-        this->map->addTerritory(territory);
-    }
-    // If the territory exists, update its position and continent
-    else
-    {
-        territory->setContinent(continent);
-        territory->setX(x);
-        territory->setY(y);
-    }
-
-    // Return a pointer to the territory
-    return territory;
-}
-
-// Adds/Modifies a connected territory, with its name 
-Territory* MapLoader::addConnectedTerritory(const std::string &territoryName)
-{
-    // Check if the territory already exists
-    Territory *territory = this->map->getTerritory(territoryName);
-
-    // If the territory does not exist, create a new one and add it to the map
-    if(territory==nullptr)
-    {
-        territory = new Territory(territoryName);
-        this->map->addTerritory(territory);
-    }
-    
-    // Return a pointer to the territory
-    return territory;
-}
-
-// Connects the continents with each other
-void MapLoader::connectContinents()
-{
-    // Current continent
-    Continent *continent;
-    // All territories
-    std::vector<Territory*> territories = this->map->getTerritories();
-
-    // Iterate through each territory
-    for(int i=0; i<territories.size(); i++)
-    {
-        // Get the continent to which the current territory belongs
-        continent = territories[i]->getContinent();
-        
-        // Iterate through each territory's connected territories
-        for(auto& territory : territories[i]->getConnectedTerritories())
-        {
-            // If the connected territory's continent is not the current continent, add it to the current continent's connected continents
-            if(territory->getContinent()->getName()!=continent->getName())
-            {
-                continent->addConnectedContinent(territory->getContinent());
-            }
-        }
-    }
-}
-
-#pragma endregion

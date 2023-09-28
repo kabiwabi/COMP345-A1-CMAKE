@@ -1,38 +1,31 @@
-#include "Map.h"
 #include <iostream>
-#include <filesystem>
-#include <string>
+#include <memory>
 
+#include "Map/Map.h"
 
-using namespace std;
-
-
-void testLoadMap(string path,string fileName)
-{
-    auto* loader = new MapLoader();
-    Map* map = loader->loadMap(path + fileName);
-
-    if(map->validate())
-    {
-        cout<<fileName<<" is valid"<<endl;
-    }
-    else
-    {
-        cout<<fileName<<" is invalid"<<endl;
-    }
-}
-
+/**
+ * @brief Tests the loading of various map files and validates them.
+ *
+ * Loads a set of predefined map files, both valid and invalid.
+ * For each map file, it checks the validity and reports the results.
+ * If a map file is in an invalid format or has errors, it catches the error and displays a message.
+ */
 void testLoadMaps() {
 
-    // test commit
-    // All map files in the maps directory
-    vector<string> files = {"Africa.map", "Alberta.map", "Anatomy.map", "AlbertaInvalid.map"};
-    string path;
-    // change to your absolute path when running
-    path = R"(C:\Users\Wang\CLionProjects\A1Cmake\src\maps\)";
-
-    testLoadMap(path, files[0]);
-    testLoadMap(path, files[1]);
-    testLoadMap(path, files[2]);
-    testLoadMap(path, files[3]);
+  std::vector<std::string> map_files {
+    "map_resources/Africa.map",
+    "map_resources/Alberta.map",
+    "map_resources/AlbertaInvalid.map",
+    "map_resources/Anatomy.map",
+  };
+  for(const std::string& p : map_files){
+    GameEngine gameEngine = GameEngine();
+    auto map = gameEngine.getMap();
+    try {
+      MapLoader::load(p, map);
+      std::cout << "Map is valid: " << (map->validate() ? "True" : "False") << std::endl;
+    } catch (const std::runtime_error& error) {
+      std::cout << "Map Format is Invalid: " << error.what() << std::endl;
+    }
+  }
 }

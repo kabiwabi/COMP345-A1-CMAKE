@@ -1,3 +1,9 @@
+C:/Users/Wang/CLionProjects/A1Cmake/cmake-build-debug/CMakeFiles/Game.dir
 C:/Users/Wang/CLionProjects/A1Cmake/cmake-build-debug/CMakeFiles/MainDriver.dir
+C:/Users/Wang/CLionProjects/A1Cmake/cmake-build-debug/CMakeFiles/testRunnerGameEngine.dir
+C:/Users/Wang/CLionProjects/A1Cmake/cmake-build-debug/CMakeFiles/testRunnerCards.dir
+C:/Users/Wang/CLionProjects/A1Cmake/cmake-build-debug/CMakeFiles/testRunnerOrders.dir
+C:/Users/Wang/CLionProjects/A1Cmake/cmake-build-debug/CMakeFiles/testRunnerPlayer.dir
+C:/Users/Wang/CLionProjects/A1Cmake/cmake-build-debug/CMakeFiles/testRunnerMap.dir
 C:/Users/Wang/CLionProjects/A1Cmake/cmake-build-debug/CMakeFiles/edit_cache.dir
 C:/Users/Wang/CLionProjects/A1Cmake/cmake-build-debug/CMakeFiles/rebuild_cache.dir
