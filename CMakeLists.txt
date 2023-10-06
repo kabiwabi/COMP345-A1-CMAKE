@@ -44,7 +44,7 @@ target_include_directories(Game PUBLIC
 # ---------------------------------------------------------
 # Main Driver
 # ---------------------------------------------------------
-add_executable(MainDriver src/main.cpp)
+add_executable(MainDriver src/MainDriver.cpp)
 target_link_libraries(MainDriver Game)
 
 # ---------------------------------------------------------
