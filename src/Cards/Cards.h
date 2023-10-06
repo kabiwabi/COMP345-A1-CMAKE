@@ -68,12 +68,12 @@ public:
      */
   CardType getCardType();
 
-    /**
-     * @brief Converts the card type to its string representation.
-     * @param c The card type to be converted.
-     * @return The string representation of the card type.
-     */
-  static std::string CardTypeToString(CardType& c);
+  /*
+   * @brief Outputs what the card is
+   * @param os reference to the OS
+   * @param c reference to the card.
+   */
+  friend std::ostream& operator<<(std::ostream& os, const Card& c);
 };
 
 /**
@@ -122,7 +122,9 @@ public:
      */
   Card* removeCard(CardType);
 
-  std::vector<Card *>* getHandCards() { return &handCards; }
+  friend std::ostream& operator<<(std::ostream& os, const Hand& h);
+
+   std::vector<Card *>* getHandCards() { return &handCards; }
 };
 
 /**
@@ -174,6 +176,13 @@ public:
      * @param card The card to be added.
      */
     void addCardToDeck(Card* card);
+
+    /*
+     * @brief Outputs the contents of the deck
+     * @param os reference to the OS
+     * @param d reference to the deck.
+     */
+    friend std::ostream& operator<<(std::ostream& os, const Deck& d);
 
 private:
     /**

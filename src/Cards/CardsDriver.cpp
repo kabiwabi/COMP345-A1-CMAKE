@@ -10,6 +10,8 @@ using namespace std;
  * and playing a card from a player's hand. It showcases the interactions between the `Card`, `Deck`, and `Hand` classes.
  */
 void testCards() {
+
+  cout << "---------------- Testing Cards -------------" << endl;
   auto gameEngine = new GameEngine();
   auto player = new Player(gameEngine, new Hand());
   Deck* deck = gameEngine->getDeck();
@@ -31,6 +33,12 @@ void testCards() {
   cout << "-> shuffling deck..." << endl;
   deck->shuffleDeck();
 
+  cout << "-> Content of deck:" << endl;
+
+  for (auto deckCard : *deck->getDeckCards()) {
+      cout << *deckCard << endl;
+  }
+
   auto player_hand = player->getHand();
 
   cout << "-> player draws 4 cards" << endl;
@@ -42,18 +50,25 @@ void testCards() {
   cout << "-> Card in player's hand" << endl;
 
   for (auto handCard : *player_hand->getHandCards()) {
-      cout << handCard->getCardType() << endl;
+      cout << *handCard << endl;
   }
 
   cout << "-> Number of Cards in Deck: " << deck->getDeckCards()->size() << endl;
   cout << "-> Number of Cards in Player's hand: " << player_hand->getHandCards()->size() << endl;
 
-  cout << "-> Player Plays a card" << endl;
+  cout << "-> Player Plays the first card" << endl;
   // play most left hand size card
   Card* card_to_play = player_hand->getHandCards()->at(0);
+
+  cout << "-> Card Played \n" << *card_to_play << endl;
   card_to_play->play();
 
   cout << "-> Number of Cards in Deck: " << deck->getDeckCards()->size() << endl;
-  cout << "-> Number of Cards in Player's hand: " << player_hand->getHandCards()->size() << endl;
+
+  cout << "-> Cards in Now in Player's hand" << endl;
+
+  for (auto handCard : *player_hand->getHandCards()) {
+      cout << *handCard << endl;
+  }
 
 }

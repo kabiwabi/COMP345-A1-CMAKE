@@ -60,27 +60,43 @@ void Card::play() {
   gameDeck->addCardToDeck(card);
 }
 
-/**
- * @brief Converts a card type to its corresponding string representation.
+/*
  *
- * @param c The card type to be converted.
- * @return Returns the string representation of the card type.
  */
-std::string Card::CardTypeToString(CardType& c) {
-  switch (c) {
-    case CT_Bomb:
-      return "Bomb";
-    case CT_Reinforcement:
-      return "CT_Reinforcement";
-    case CT_Blockade:
-      return "Blockade";
-    case CT_Airlift:
-      return "Airlift";
-    case CT_Diplomacy:
-      return "Diplomacy";
-    default:
-      throw std::runtime_error("ASSERT: Invalid Card Type");
-  }
+std::ostream& operator<<(std::ostream& os, const Card& c) {
+    os << "Card: ";
+    switch (c.cardType)
+    {
+        case 0:
+        {
+            os << "Bomb" << std::endl;
+            break;
+        }
+        case 1:
+        {
+            os << "Reinforcement" << std::endl;
+            break;
+        }
+        case 2:
+        {
+            os << "Blockade" << std::endl;
+            break;
+        }
+        case 3:
+        {
+            os << "Airlift" << std::endl;
+            break;
+        }
+        case 4:
+        {
+            os << "Diplomacy" << std::endl;
+            break;
+        }
+        default:
+            break;
+    }
+
+    return os;
 }
 
 /**
@@ -111,6 +127,15 @@ Hand::~Hand()
   handCards.clear();
 }
 
+std::ostream& operator<<(std::ostream& os, const Hand& h) {
+    os << "\nHand contains the following cards:" << std::endl;
+
+    for (Card* c : h.handCards)
+    {
+        os << *c;
+    }
+    return os;
+}
 
 /**
  * @brief Gets all the cards in hand.
@@ -203,6 +228,21 @@ Deck::Deck(const Deck &initial)
   for (auto &&temp : initial.deckCards) {
     deckCards.push_back(new Card(*temp));
   }
+}
+
+/**
+ * @brief Prints whats in the deck to the OS
+ *
+ * @param os Reference to the output stream.
+ * @param d Reference to the Deck object.
+ */
+std::ostream& operator<<(std::ostream& os, const Deck& d) {
+    os << "\nDeck contains the following cards:"<< std::endl;
+    for(Card* c : d.deckCards)
+    {
+        os << *c;
+    }
+    return os;
 }
 
 /**
