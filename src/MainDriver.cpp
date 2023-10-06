@@ -9,10 +9,10 @@ using namespace std;
 int main()
 {
   testLoadMaps();
-  //testGameStates();
-  //testOrdersLists();
-    //testCards();
-  //testPlayers();
+  testGameStates();
+  testOrdersLists();
+  testCards();
+  testPlayers();
   return 0;
 }
 
