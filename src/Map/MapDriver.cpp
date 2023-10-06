@@ -17,6 +17,11 @@ void testLoadMaps() {
     "map_resources/Alberta.map",
     "map_resources/AlbertaInvalid.map",
     "map_resources/Anatomy.map",
+    "map_resources/TestMap1_valid.map",
+    "map_resources/TestMap2_invalid.map",
+    "map_resources/TestMap3_invalid.map",
+    "map_resources/TestMap4_valid.map",
+    "map_resources/TestMap5_invalid_format.map",
   };
   for(const std::string& p : map_files){
     GameEngine gameEngine = GameEngine();

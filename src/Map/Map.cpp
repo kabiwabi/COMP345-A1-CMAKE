@@ -819,6 +819,7 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
       {
         auto delimiter_location = line.find(delimiter);
         std::string value = line.substr(0, delimiter_location);
+        value = rtrim(ltrim(value));
         line = delimiter_location == std::string::npos ? "" : line.substr(delimiter_location + 1, line.length());
 
         // x
