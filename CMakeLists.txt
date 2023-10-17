@@ -35,7 +35,11 @@ set(GAME_LIB_SRCS
     src/GameEngine/GameEngineDriver.h
     src/GameEngine/GameEngine.cpp
     src/GameEngine/GameEngine.h
-    )
+        "src/CommandProcessing/CommandProcessing.h"
+        "src/CommandProcessing/CommandProcessing.cpp"
+        "src/CommandProcessing/CommandProcessingDriver.cpp"
+        "src/CommandProcessing/CommandProcessingDriver.h"
+)
 add_library(Game STATIC ${GAME_LIB_SRCS})
 target_include_directories(Game PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
