@@ -108,7 +108,8 @@ public:
     ~Map();
     /// Validates the map.
     bool validate();
-
+    // Resets the map initialization
+    void resetMap();
     /// Copy constructor for Map.
     Map(const Map &other);
     /// Assignment operator for Map.

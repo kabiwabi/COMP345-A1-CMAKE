@@ -8,8 +8,8 @@ int Player::nextId = 0;
  * @param game Pointer to the game engine the player belongs to.
  * @param cards Pointer to the hand of cards the player possesses.
  */
-Player::Player(GameEngine* game, Hand* cards)
-        : game(game), hand(cards), id(nextId++)
+Player::Player(GameEngine* game, Hand* cards, const std::string& name)
+        : game(game), hand(cards), id(nextId++), name(name), reinforcementPool(0)
 {
     orders = new OrdersList();
     game->addPlayer(this);
@@ -145,6 +145,19 @@ Hand *Player::getHand() {
 OrdersList *Player::getOrdersListObject() {
     return orders;
 }
+/**
+ * @brief Adds to the player's armies
+ */
+void Player::addToReinforcementPool(int armiesToAdd) {
+    reinforcementPool += armiesToAdd;
+}
+
+/**
+ * @brief Remove from the player's armies
+ */
+void Player::removefromReinforcementPool(int armiesToAdd) {
+    reinforcementPool -= armiesToAdd;
+}
 
 /**
  * @brief Retrieves the ID of the player.
@@ -152,4 +165,20 @@ OrdersList *Player::getOrdersListObject() {
  */
 int Player::getId() const {
     return id;
+}
+
+/**
+ * @brief Retrieves the armies of the player.
+ * @return The player's armies.
+ */
+int Player::getReinforcementPool(){
+    return reinforcementPool;
+}
+
+/**
+ * @brief Retrieves the name of the player.
+ * @return Reference of the name.
+ */
+std::string Player::getName() const {
+    return name;
 }

@@ -11,6 +11,14 @@
  * Demonstrates and tests the different states the game can be in.
  * Calls various methods of the GameEngine based on the current state and user input.
  */
+void testStartupPhase();
+
+/**
+ * @brief Tests the various states of the game engine.
+ *
+ * Demonstrates and tests the different states the game can be in.
+ * Calls various methods of the GameEngine based on the current state and user input.
+ */
 void testGameStates();
 
 /**

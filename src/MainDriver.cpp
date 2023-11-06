@@ -10,6 +10,7 @@ using namespace std;
 int main(int argc, char** argv)
 {
     bool runTests = false;
+    bool testStartup = false;
     bool useFileCmd = false;
     string cmdFilename = "";
 
@@ -22,14 +23,17 @@ int main(int argc, char** argv)
         }
     }
 
+    if(testStartup){
+        testStartupPhase();
+    }
 
     if(runTests){
-        testCommandProcessor();
-        testLoadMaps();
-        testGameStates();
-        testOrdersLists();
-        testCards();
-        testPlayers();
+        //testCommandProcessor();
+        //testLoadMaps();
+        //testGameStates();
+        //testOrdersLists();
+        //testCards();
+        //testPlayers();
     }
 
     return 0;

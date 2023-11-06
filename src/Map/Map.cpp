@@ -12,6 +12,34 @@ bool Map::validate()
 }
 
 /**
+ * @brief Resets the map to its initial state by clearing territories, continents, and resetting settings.
+ *
+ * This function clears the territories and continents in the map, freeing the memory associated with them.
+ * Additionally, it resets the map settings including name, image, author, wrap, scroll, and warn.
+ */
+void Map::resetMap() {
+    // Clear the territories
+    for (auto territory : territories) {
+        delete territory; // Free the memory occupied by the territories
+    }
+    territories.clear(); // Clear the territories vector
+
+    // Clear the continents
+    for (auto continent : continents) {
+        delete continent; // Free the memory occupied by the continents
+    }
+    continents.clear(); // Clear the continents vector
+
+    // Reset settings
+    name = "";
+    image = "";
+    author = "";
+    wrap = false;
+    scroll = false;
+    warn = false;
+}
+
+/**
  * @brief Performs Depth First Search (DFS) on a given territory to check for connectivity.
  *
  * @param territory The starting territory for DFS.

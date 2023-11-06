@@ -12,7 +12,7 @@ void testPlayers() {
     auto gameEngine = new GameEngine();
 
     /// Creating a player
-    auto p = new Player(gameEngine, new Hand());
+    auto p = new Player(gameEngine, new Hand(), "Player");
 
     /// Loading a map to access territories
     gameEngine->loadMap("map_resources/TestMap1_valid.map");

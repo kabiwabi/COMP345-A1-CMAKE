@@ -55,6 +55,24 @@ public:
   // ----------------------------------------
   // Modifiers & Setters
   // ----------------------------------------
+
+    /**
+     * @brief Method to initiate the game's startup phase by allowing user input.
+     */
+    void startupPhase();
+
+    /**
+     * @brief Randomizes the player order.
+     */
+    void randomizePlayerOrder();
+
+    /**
+     * @brief Returns an invalid command message.
+     *
+     *  @param command The string form of the invalid commant.
+     */
+    void printInvalidCommand(const std::string& command);
+
     /**
      * @brief Sets the current state of the game engine.
      *

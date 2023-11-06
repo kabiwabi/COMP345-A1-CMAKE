@@ -13,7 +13,7 @@ void testCards() {
 
   cout << "---------------- Testing Cards -------------" << endl;
   auto gameEngine = new GameEngine();
-  auto player = new Player(gameEngine, new Hand());
+  auto player = new Player(gameEngine, new Hand(), "Player");
   Deck* deck = gameEngine->getDeck();
 
   cout << "-> Adding 10 cards to deck..." << endl;

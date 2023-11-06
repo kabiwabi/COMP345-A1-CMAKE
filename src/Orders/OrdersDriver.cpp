@@ -12,7 +12,7 @@ void testOrdersLists()
 {
     /// Initialize the game engine and the player
     auto gameEngine = new GameEngine;
-    auto player = new Player(gameEngine, new Hand());
+    auto player = new Player(gameEngine, new Hand(), "Player");
 
     /// Add player to the game engine
     gameEngine->addPlayer(player);

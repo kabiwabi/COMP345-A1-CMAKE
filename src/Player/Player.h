@@ -28,6 +28,9 @@ private:
     /// The unique ID for the player.
     int id;
 
+    /// The name of teh player
+    std::string name;
+
     /// The territories that this player owns.
     std::vector<Territory*> territories;
 
@@ -40,12 +43,15 @@ private:
     /// The game engine that this player is a part of.
     GameEngine* game;
 
+    /// The reinforcement pool of the player
+    int reinforcementPool;
+
 public:
     /**
      * @name Constructors and Destructors
      * @{
      */
-    Player(GameEngine* game, Hand* cards);
+    Player(GameEngine* game, Hand* cards, const std::string& name);
     ~Player();
     Player(const Player &p);
     /** @} */
@@ -67,6 +73,8 @@ public:
     void issueOrder(CardType cardType);
     void addTerritory(Territory& territory);
     void removeTerritory(Territory& territory);
+    void removefromReinforcementPool(int armiesToAdd);
+    void addToReinforcementPool(int armiesToAdd);
     /** @} */
 
     /**
@@ -77,6 +85,8 @@ public:
     OrdersList* getOrdersListObject();
     std::vector<Territory*>* getTerritories();
     int getId() const;
+    int getReinforcementPool();
+    std::string getName() const;
     /** @} */
 
 public:

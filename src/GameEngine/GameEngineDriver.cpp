@@ -1,4 +1,13 @@
 #include "GameEngineDriver.h"
+#include "GameEngine.h"
+
+/**
+ * @brief Tests the game's startup phase by demonstrating the correct implementation of initial setup steps.
+ */
+void testStartupPhase() {
+    GameEngine gameEngine;
+    gameEngine.startupPhase();
+}
 
 /**
  * @brief Print an error message for an invalid command.
@@ -8,6 +17,7 @@
 void printInvalidCommand(const std::string& command){
   std::cout << "Incorrect Command: \"" << command << "\". Please input a correct command." << std::endl;
 }
+
 
 /**
  * @brief Test function to demonstrate the game state transitions.
