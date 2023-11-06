@@ -1,190 +1,149 @@
-#include <sstream>
 #include "GameEngine.h"
 
 /**
- * @brief Method to initiate the game's startup phase by allowing user input.
- */
-void GameEngine::startupPhase() {
-    std::string input;
-    std::vector<std::string> maps = {"Africa", "Alberta", "Anatomy", "AlbertaInvalid"};
-    int totalPlayers = 0;
-    while (true) {
-        std::cout << "Current Game State: " << getCurrentStateToString() << std::endl;
-        std::cout << "Please enter an action: " ;
-
-        std::getline(std::cin, input);
-
-        std::istringstream iss(input);
-        std::string command, varName;
-
-        // Read the first word as the command
-        iss >> command;
-
-        switch (getCurrentState()) {
-            // Game Start Phase
-            case GE_Start:
-                if (command == "loadmap" ) {
-                    iss >> varName;
-                    if (input.substr(0,6) == "loadmap")
-                    std::string varName = input.substr(7);
-                    // Map name is validated
-                    if (std::find(maps.begin(), maps.end(), varName) != maps.end()) {
-                        loadMap("map_resources/" + varName + ".map");
-                        std::cout << "Loaded Map: " << varName << std::endl;
-                        setCurrentState(GE_Map_Loaded);
-                    }
-                    // User prompted to enter a valid map name
-                    else {
-                        std::cout << "Invalid map name. Choose any of the following maps: \nAfrica\nAlberta\nAnatomy\nAlbertaInvalid\n";
-                    }
-                } else {
-                    printInvalidCommand(input);
-                }
-                break;
-
-            // Map loaded phase
-            case GE_Map_Loaded:
-                if (input == "validatemap") {
-                    if (map->validate() == true){
-                        std::cout << "Map is valid. "  << std::endl;
-                        setCurrentState(GE_Map_Validated);}
-                    else {
-                        std::cout << "Map is invalid. Returning to previous game state." << std::endl;
-                        map->resetMap();
-                        varName="";
-                        setCurrentState(GE_Start);
-                    }
-                } else {
-                    printInvalidCommand(input);
-                }
-                break;
-
-            case GE_Map_Validated:
-                if (command == "gamestart" && totalPlayers > 1 ){
-                    setCurrentState(GE_Players_Added);
-                    continue;
-                }
-                if (command == "addplayer") {
-                    iss >> varName;
-
-                    if (varName.size() < 1) {
-                        std::cout << "Player name must contain at least 1 character.\n";
-                        continue;
-                    }
-
-                    if (totalPlayers < 7) {
-                        addPlayer(new Player(this, new Hand(), varName));
-                        totalPlayers++;
-
-                        if (totalPlayers < 2) {
-                            std::cout << "Player " << totalPlayers << ", " << varName << ", added. Minimum of 2 players are required to start the game.\n";
-                        } else {
-                            std::cout << "Player " << totalPlayers << ", " << varName << ", added.\n";
-                        }
-                    }  else {
-                        std::cout << "Maximum of 6 players reached. Cannot add more players.\n";
-                    }
-
-                } else {
-                    printInvalidCommand(input);
-                }
-                break;
-            case GE_Players_Added:
-                if (input == "gamestart") {
-                    // a) Fairly distribute territories to players
-                    int currentPlayerIndex = 0;
-                    for (Territory* territory : *map->getTerritories()) {
-                        Player* currentPlayer = players[currentPlayerIndex];
-                        currentPlayer->addTerritory(*territory);
-                        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
-                    }
-
-                    // b) Randomize play order
-                    randomizePlayerOrder();
-                    std::cout << "Player Order After Randomization:" << std::endl;
-                    for (size_t i = 0; i < totalPlayers; ++i) {
-                        std::cout << "Player " << i + 1 << ": " << players[i]->getName() << std::endl;
-                    }
-
-                    // c) Give 50 initial army units to each player in their reinforcement pool
-                    for (size_t i = 0; i < totalPlayers; ++i) {
-                        std::cout << "Player " << i + 1; // Update the output to display the correct player number
-                        players[i]->addToReinforcementPool(50);
-                        std::cout << " Reinforcement size: " << players[i]->getReinforcementPool() << std::endl;
-                    }
-
-                    // d) Let each player draw 2 initial cards from the deck
-                    for (Player *player: players) {
-                        for (int i = 0; i < 1; i++) {
-                            deck->draw(*player->getHand());
-                        }}
-
-                    auto playerTwoHand = players[1]->getHand()->getHandCards();
-                    for (auto handCard : *playerTwoHand) {
-                        cout << "Player Cards for " << players[1]->getName() << "; " << *handCard;
-                    }
-
-                    // e) Switch the game to the play phase
-                    setCurrentState(GE_Reinforcement);
-
-                }else {
-                        printInvalidCommand(input);
-                    }
-
-                }
-
-
-        if (getCurrentState() == GE_Reinforcement) {
-            std::cout << "Game setup completed. Moving to the Reinforcement play phase." << std::endl;
-            break; // Exit the loop and start the game
-        }
-        std::cout << "------------------------------" << std::endl;
-    }
-}
-
-/**
- * @brief Print an error message for an invalid command.
- *
- * @param command The incorrect command entered by the user.
- */
-void GameEngine::printInvalidCommand(const std::string& command) {
-    std::cout << "Incorrect Command: \"" << command << "\". Please input a correct command." << std::endl;
-}
-
-/**
- * @brief Sets the current state of the GameEngine.
- *
- * @param engineState The state to set the GameEngine to.
+ * @brief Sets the current state of the game and notifies observers.
+ * @param engineState The new state to set the game to.
  */
 void GameEngine::setCurrentState(GameEngineState engineState) {
   this->state = engineState;
+  Subject::notify(this);
 }
 
 /**
- * @brief Retrieves the current state of the GameEngine.
- *
- * @return GameEngineState The current state of the GameEngine.
+ * @brief Gets the current state of the game.
+ * @return The current state of the game.
  */
 GameEngineState GameEngine::getCurrentState() {
   return this->state;
 }
 
 /**
- * @brief Constructs a GameEngine object with an initial state.
- *
- * @param state The initial state of the GameEngine.
+ * @brief Constructor for GameEngine, initializes the game with the provided arguments.
+ * @param state Initial state of the game engine.
+ * @param argc Argument count from the command line.
+ * @param argv Argument vector from the command line.
  */
-GameEngine::GameEngine(GameEngineState state) {
+GameEngine::GameEngine(GameEngineState state, int argc, char** argv) {
   this->state = state;
   this->deck = new Deck(this);
   this->map = new Map(this);
+  this->logObserver = new LogObserver(this);
+  this->commandProcessor = new CommandProcessor(this, argc, argv);
+  this->adapter = new FileCommandProcessorAdapter(this, argc, argv);
+  this->flr = new FileLineReader();
+  Subject::attach((ILogObserver*)logObserver);
 }
 
 /**
- * @brief Converts the current state of the GameEngine to its string representation.
- *
- * @return std::string The string representation of the GameEngine's state.
- * @exception std::runtime_error If the GameEngine's state is invalid.
+ * @brief Conducts the startup phase of the game where initial setup is done.
+ */
+void GameEngine::startupPhase() {
+    Command* command;
+    std::string strCommand;
+    std::string effect;
+
+    if(!commandProcessor){ throw std::runtime_error("GameEngine::startupPhase::ASSERT commandProcessor is null"); }
+    cout << "Welcome to the startup phase of the game!\n"<< endl;
+    printCommands();
+    do{
+        command = commandProcessor->getCommand();
+        strCommand = command->getCommand();
+        effect = command->getEffect();
+
+        if(effect == "Game successfully restarted") {
+          resetGame();
+          startupPhase();
+        }
+
+        else if(!isValid(effect) && strCommand != "quit"){
+            cout << "The command or its argument is invalid" << endl;
+            continue;
+        }
+    } while(strCommand != "quit" );
+}
+
+/**
+ * @brief Validates if the maximum number of players has been reached.
+ */
+void GameEngine::validateMaxPlayers() {
+  if(players.size() == 6){
+    throw std::runtime_error("Maximum number of players(6) reached! Game is ready to be started.");
+  }
+}
+
+/**
+ * @brief Validates if the minimum number of players required to start the game is present.
+ */
+void GameEngine::validateMinPlayers() {
+  if(players.size() < 2){
+    throw std::runtime_error("Please add at least one more player! Minimum number of players required is two(2).");
+  }
+}
+
+
+/**
+ * @brief Distributes territories among players at the start of the game.
+ */
+void GameEngine::distributeTerritories(){
+  if(!map){ throw std::runtime_error("GameEngine::distributeTerritories::ASSERT Map is null"); }
+  std::vector<Territory*>* territories = map->getTerritories();
+  int numPlayers = (int)players.size();
+  int territoriesDistr[numPlayers];
+  int terrPerPlayer = floor(territories->size() / numPlayers);
+  int remainingTerr = (int)territories->size() - (numPlayers * terrPerPlayer);
+  int currPlayer = 0;
+  int tempTerr = 0;
+  Player* player = players.at(currPlayer);
+
+  for(int i = 0; i < numPlayers; i++){
+      territoriesDistr[i] = terrPerPlayer;
+      if(remainingTerr > 0){
+              territoriesDistr[i] +=1;
+              remainingTerr--;
+      }
+  }
+
+  for(Territory *terr : *territories){
+      Territory* t = terr;
+      if(tempTerr == (territoriesDistr[currPlayer])){
+          currPlayer++;
+          player = players.at(currPlayer);
+          tempTerr = 0;
+      }
+      player->addTerritory(*t);
+      tempTerr++;
+  }
+}
+
+/**
+ * @brief Randomizes the order of players.
+ */
+void GameEngine::playerOrder(){
+  auto rng = std::default_random_engine {};
+  std::shuffle(std::begin(players), std::end(players), rng);
+}
+
+/**
+ * @brief Checks if a given command string is valid.
+ * @param strCommand The command string to validate.
+ * @return True if valid, false otherwise.
+ */
+bool GameEngine::isValid(const std::string& strCommand){return strCommand.find("Invalid") == string::npos;}
+
+/**
+ * @brief Prints the available commands to the console.
+ */
+void GameEngine::printCommands() {
+    cout<< "Here are the commands available to you: "<<endl;
+    for (const string& cmd: commands) {
+        cout << cmd << " ";
+    }
+    cout << "\n" << endl;
+}
+
+/**
+ * @brief Returns the current state of the game as a string.
+ * @return A string representing the current game state.
  */
 std::string GameEngine::getCurrentStateToString() {
   switch (this->state) {
@@ -209,57 +168,58 @@ std::string GameEngine::getCurrentStateToString() {
   throw std::runtime_error("Invalid State");
 }
 
-
 /**
- * @brief Progresses to the next player's turn.
- */
-void GameEngine::nextPlayerTurn() {
-  playerTurn++;
-  playerTurn %= players.size();
-}
-
-/**
- * @brief Retrieves the list of players in the game.
- *
- * @return std::vector<Player *> * Pointer to the list of players.
+ * @brief Gets the players participating in the game.
+ * @return A pointer to the vector of players.
  */
 std::vector<Player *> *GameEngine::getPlayers() {
   return &this->players;
 }
 
 /**
- * @brief Gets the player whose turn it currently is.
- *
- * @return Player* Pointer to the current player.
+ * @brief Gets the current player's turn.
+ * @return A pointer to the current player.
  */
 Player* GameEngine::getCurrentPlayerTurn() {
-  return players.at(playerTurn);
+  return currentPlayerTurn;
 }
 
 /**
- * @brief Retrieves the game's deck.
- *
- * @return Deck* Pointer to the game's deck.
+ * @brief Retrieves the deck associated with the game engine.
+ * @return A pointer to the Deck object.
  */
-Deck *GameEngine::getDeck() {
+Deck* GameEngine::getDeck() {
   return this->deck;
 }
 
 /**
- * @brief Retrieves the game's map.
- *
- * @return Map* Pointer to the game's map.
+ * @brief Retrieves the map associated with the game engine.
+ * @return A pointer to the Map object.
  */
 Map* GameEngine::getMap() {
   return this->map;
 }
 
+/**
+ * @brief Retrieves the log observer associated with the game engine.
+ * @return A pointer to the LogObserver object.
+ */
+LogObserver* GameEngine::getLogObserver() {
+    return this->logObserver;
+}
 
 /**
- * @brief Adds a new player to the game.
- *
- * @param player Pointer to the player to be added.
- * @exception std::runtime_error If the player is a nullptr or if trying to add a player after the game has started.
+ * @brief Retrieves the command processor associated with the game engine.
+ * @return A pointer to the CommandProcessor object.
+ */
+CommandProcessor* GameEngine::getCommandProcessor() {
+    return this->commandProcessor;
+}
+
+/**
+ * @brief Adds a new player to the game engine.
+ * @param player A pointer to the Player object to add.
+ * @throw std::runtime_error If the player pointer is nullptr or if the game state does not allow adding a new player.
  */
 void GameEngine::addPlayer(Player* player) {
   if(player == nullptr){
@@ -272,50 +232,282 @@ void GameEngine::addPlayer(Player* player) {
 }
 
 /**
- * @brief Destructor for the GameEngine class.
- *
- * Deletes memory allocations for deck, map, and players.
+ * @brief Destructor for the GameEngine, responsible for cleaning up resources.
  */
 GameEngine::~GameEngine() {
-  delete deck;
-  delete map;
-
   for(auto player : players){
     delete player;
   }
+
+  delete deck;
+  delete map;
+  delete adapter;
+  delete flr;
+  delete logObserver;
+  delete commandProcessor;
 }
 
 /**
- * @brief Default constructor for the GameEngine class.
+ * @brief Overloaded constructor for GameEngine, used for setting up the game environment.
+ * @param argc The number of command-line arguments.
+ * @param argv The command-line arguments.
  */
-GameEngine::GameEngine() {
+GameEngine::GameEngine(int argc, char** argv) {
+  this->logObserver = new LogObserver(this);
   this->map = new Map(this);
   this->deck = new Deck(this);
-
-    // Adding 30 different cards to the deck during initialization
-    for (int i = 0; i < 30; i++) {
-        CardType cardType = static_cast<CardType>(i % 5);
-        this->deck->addCardToDeck(new Card(cardType, this));
-    }
-
-    // Shuffle the deck after adding cards
-    this->deck->shuffleDeck();
+  this->adapter = new FileCommandProcessorAdapter(this, argc, argv);
+  this->flr = new FileLineReader();
+  this->commandProcessor = new CommandProcessor(this, argc, argv);
+  this->argc = argc;
+  this->argv = argv;
+  Subject::attach((ILogObserver*)logObserver);
 }
 
 /**
- * @brief Loads a map file into the game.
- *
- * @param path Path to the map file to be loaded.
+ * @brief Loads a map from a given file path.
+ * @param path Path to the map file.
  */
 void GameEngine::loadMap(const std::string& path) {
   MapLoader::load(path, this->map);
 }
 
 /**
- * @brief Randomizes the player order.
+ * @brief Validates the loaded map.
+ * @return True if the map is valid, otherwise false.
+ * @throw runtime_error if the map pointer is null.
  */
-void GameEngine::randomizePlayerOrder() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::shuffle(players.begin(), players.end(), gen);
+bool GameEngine::validateMap() {
+  if(map == nullptr){ throw runtime_error("ASSERT: Map is null."); }
+  return map->validate();
+}
+
+
+/**
+ * @brief Converts the current state of the game engine into a string for logging.
+ * @return A string representing the current state for logging purposes.
+ */
+std::string GameEngine::stringToLog() {
+  std::stringstream ss;
+  ss << "GAME ENGINE: ";
+  ss << "State transition to ";
+  ss << getCurrentStateToString();
+  return ss.str();
+}
+
+/**
+ * @brief The reinforcement phase of the game where players receive and place their reinforcements.
+ */
+void GameEngine::reinforcementPhase()
+{
+  for (auto& player : players)
+  {
+    currentPlayerTurn = player;
+    player->setPhase("Reinforcement");
+    cout << "Player: " << player->getName() << "'s current Reinforcement Pool: "<< player->getReinforcementPool() << endl;
+    int reinforcementsToAdd = 0;
+
+    reinforcementsToAdd += player->getContinentBonus();
+    if(reinforcementsToAdd > 0){cout << "Player: " << player->getName() << "'s continent bonus is: "<< player->getReinforcementPool() << endl;}
+
+    reinforcementsToAdd += (int)(player->getTerritories()->size() / 3) * 3;
+
+    if(reinforcementsToAdd < 3){ reinforcementsToAdd = 3;}
+
+    player->addReinforcement(reinforcementsToAdd);
+
+    cout << "Player: " << player->getName() << "'s updated Reinforcement Pool: "<< player->getReinforcementPool() << endl;
+  }
+}
+
+
+/**
+ * @brief The phase where players issue their orders.
+ */
+void GameEngine::issueOrdersPhase() {
+  int phaseTurn = 0;
+  vector<bool> completed(players.size());
+  for(auto& player : players){ player->setPhase("Issue Orders"); }
+
+  while(!std::all_of(completed.begin(), completed.end(), [](bool v) { return v; })){
+    if(completed[phaseTurn]){ nextTurn(phaseTurn); continue; }
+    currentPlayerTurn = players[phaseTurn];
+
+    cout << "Player: " << currentPlayerTurn->getName() << "'s turn to issue an order!" << endl;
+
+    if(currentPlayerTurn->getDeployedArmiesThisTurn() >= currentPlayerTurn->getReinforcementPool()){
+      cout << "Player: " << currentPlayerTurn->getName() << " has no more orders to issue." << endl;
+      completed[phaseTurn] = true;
+      continue;
+    }
+
+    currentPlayerTurn->issueOrder();
+
+    nextTurn(phaseTurn);
+  }
+
+  for(auto& player : players){
+    player->clearDeploymentArmies();
+  }
+}
+
+/**
+ * @brief The phase where the players' orders are executed.
+ */
+void GameEngine::executeOrdersPhase() {
+  int phaseTurn = 0;
+  vector<bool> completed(players.size());
+  for(auto& player : players){ player->setPhase("Execute Orders Phase"); }
+
+  while(!std::all_of(completed.begin(), completed.end(), [](bool v) { return v; })){
+    if(completed[phaseTurn]){nextTurn(phaseTurn); continue; }
+    currentPlayerTurn = players[phaseTurn];
+    auto currentPlayerOrders = currentPlayerTurn->getOrdersListObject()->getList();
+
+    if(currentPlayerOrders->empty()){
+      cout << "Player: " << currentPlayerTurn->getName() << " has no more orders to execute." << endl;
+      completed[phaseTurn] = true;
+      continue;
+    }
+
+    auto topOrder = currentPlayerOrders->at(0);
+    cout << "Player: " << currentPlayerTurn->getName() << "'s order: " + topOrder->getLabel() + " is being executed." << endl;
+    topOrder->execute();
+    currentPlayerOrders->erase(currentPlayerOrders->cbegin());
+
+    delete topOrder;
+
+    nextTurn(phaseTurn);
+  }
+
+  for(auto player : players){
+    player->clearFriendly();
+  }
+}
+
+/**
+ * @brief The main game loop that continues until there is a winner.
+ */
+void GameEngine::mainGameLoop() {
+  if(players.empty()){throw std::runtime_error("GameEngine::mainGameLoop::Assert Player size is 0.");}
+  Player* winner;
+  // check win state
+  int round = 0;
+  while((winner = checkWinState()) == nullptr){
+    cout << "-----------------------------------------------------------------------" << endl;
+    cout << "Round: " << round << "" << endl;
+    cout << "-----------------------------------------------------------------------" << endl;
+    reinforcementPhase();
+    issueOrdersPhase();
+    executeOrdersPhase();
+    removePlayersWithNoTerritories();
+    round++;
+  }
+  cout << "Congratulations " << winner->getName() << "!" << endl;
+  setCurrentState(GE_Win);
+}
+
+/**
+ * @brief Checks if a player has won the game.
+ * @return A pointer to the winning player if there is one, otherwise nullptr.
+ * @throw runtime_error if the map pointer is null.
+ */
+Player* GameEngine::checkWinState() {
+  if(map == nullptr){throw std::runtime_error("checkWinState::Assert Map is null.");}
+
+  int totalAmountOfTerritories = (int) map->getTerritories()->size();
+
+  for(auto& player: players){
+    if(player->getTerritories()->size() == totalAmountOfTerritories){
+      return player;
+    }
+  }
+  return nullptr;
+}
+
+/**
+ * @brief Advances the turn to the next player.
+ * @param turn The current turn index, to be updated to the next player's index.
+ */
+void GameEngine::nextTurn(int &turn) {
+  turn++;
+  turn %= (int)players.size();
+}
+
+/**
+ * @brief Sets the current player's turn.
+ * @param player Pointer to the player whose turn is to be set.
+ */
+void GameEngine::setCurrentPlayer(Player* player) {
+  currentPlayerTurn = player;
+}
+
+/**
+ * @brief Removes players who have no territories left.
+ */
+void GameEngine::removePlayersWithNoTerritories() {
+  auto playersToBeDeleted = vector<Player*>();
+
+  for(auto& player : players){
+    if(player->getTerritories()->empty()){
+      playersToBeDeleted.push_back(player);
+    }
+  }
+
+  players.erase(std::remove_if(players.begin(), players.end(), [&](Player* p) {
+                  return p->getTerritories()->empty();
+                }), players.end());
+
+
+  for(auto& player : playersToBeDeleted){
+    cout << player->getName() << " has been conquered!" << endl;
+    delete player;
+  }
+}
+
+/**
+ * @brief Gets the FileLineReader object.
+ * @return A pointer to the FileLineReader.
+ */
+FileLineReader* GameEngine::getFlir() {
+  return flr;
+}
+
+/**
+ * @brief Gets the FileCommandProcessorAdapter object.
+ * @return A pointer to the FileCommandProcessorAdapter.
+ */
+FileCommandProcessorAdapter *GameEngine::getFileCommandProcessorAdapter() {
+  return adapter;
+}
+
+/**
+ * @brief Resets the game to its initial state.
+ */
+void GameEngine::resetGame() {
+
+  for(auto player : players){
+    delete player;
+  }
+
+  delete deck;
+  delete map;
+  delete adapter;
+  delete flr;
+  delete logObserver;
+  delete commandProcessor;
+
+  this->players = vector<Player*>();
+  this->currentPlayerTurn = nullptr;
+
+  this->logObserver = new LogObserver(this);
+  this->map = new Map(this);
+  this->deck = new Deck(this);
+  this->adapter = new FileCommandProcessorAdapter(this, argc, argv);
+  this->flr = new FileLineReader();
+  this->commandProcessor = new CommandProcessor(this, argc, argv);
+  this->resetObservers();
+
+  Subject::attach((ILogObserver*)logObserver);
+
 }

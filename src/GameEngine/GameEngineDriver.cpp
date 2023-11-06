@@ -1,81 +1,125 @@
 #include "GameEngineDriver.h"
-#include "GameEngine.h"
 
 /**
- * @brief Tests the game's startup phase by demonstrating the correct implementation of initial setup steps.
+ * @brief Test function for the startup phase of the Game Engine.
+ *
+ * This function initializes a GameEngine object with command-line arguments and
+ * calls its startupPhase method to simulate the startup phase of the game.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line arguments.
  */
-void testStartupPhase() {
-    GameEngine gameEngine;
-    gameEngine.startupPhase();
+void testStartupPhase(int argc, char** argv){
+  auto gameEngine = GameEngine(argc,argv);
+  gameEngine.startupPhase();
 }
 
 /**
- * @brief Print an error message for an invalid command.
+ * @brief Test function for the main game loop of the Game Engine.
  *
- * @param command The incorrect command entered by the user.
- */
-void printInvalidCommand(const std::string& command){
-  std::cout << "Incorrect Command: \"" << command << "\". Please input a correct command." << std::endl;
-}
-
-
-/**
- * @brief Test function to demonstrate the game state transitions.
+ * This function sets up a game scenario by creating a GameEngine object with command-line
+ * arguments, initializing a deck with cards, loading a map, creating players and assigning
+ * territories, and finally adding cards to the players' hands. The main game loop is then started.
  *
- * This function simulates the various states of the game engine and the transitions
- * between them based on user input.
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line arguments.
  */
-void testGameStates(){
-  /// Creates an instance of game_engine
-  GameEngine gameEngine;
-  /// Get user input (a command)
-  std::string input;
-  /// Game runs while true
-  while(true){
-    std::cout << "Current Game State: " << gameEngine.getCurrentStateToString() << std::endl;
-    std::cout << "Please enter an action: ";
-    std::cin >> input;
+void testMainGameLoop(int argc, char** argv){
+  auto gameEngine = GameEngine(argc, argv);
 
-    switch(gameEngine.getCurrentState()){
-      case GE_Start:
-        if(input == "loadmap"){ gameEngine.setCurrentState(GameEngineState::GE_Map_Loaded); }
-        else { printInvalidCommand(input); }
-        break;
-      case GE_Map_Loaded:
-        if(input == "loadmap"){ continue; }
-        else if(input == "validatemap"){ gameEngine.setCurrentState(GameEngineState::GE_Map_Validated); }
-        else { printInvalidCommand(input); }
-        break;
-      case GE_Map_Validated:
-        if(input == "addplayer"){ gameEngine.setCurrentState(GameEngineState::GE_Players_Added); }
-        else { printInvalidCommand(input); }
-        break;
-      case GE_Players_Added:
-        if(input == "addplayer"){ continue; }
-        else if(input == "assigncountries"){ gameEngine.setCurrentState(GameEngineState::GE_Reinforcement); }
-        else { printInvalidCommand(input); }
-        break;
-      case GE_Reinforcement:
-        if(input == "issueorder"){ gameEngine.setCurrentState(GameEngineState::GE_Issue_Orders); }
-        else { printInvalidCommand(input); }
-        break;
-      case GE_Issue_Orders:
-        if(input == "issueorder"){ continue; }
-        else if(input == "endissueorders"){ gameEngine.setCurrentState(GameEngineState::GE_Execute_Orders); }
-        else { printInvalidCommand(input); }
-        break;
-      case GE_Execute_Orders:
-        if(input == "execorder"){ continue; }
-        else if(input == "execorders"){ gameEngine.setCurrentState(GameEngineState::GE_Reinforcement); }
-        else if(input == "win"){ gameEngine.setCurrentState(GameEngineState::GE_Win); }
-        else { printInvalidCommand(input); }
-        break;
-      case GE_Win:
-        if(input == "play"){ gameEngine.setCurrentState(GameEngineState::GE_Start); }
-        else if(input == "end"){ return; }
-        else { printInvalidCommand(input); }
-        break;
-    }
-    std:: cout << "------------------------------" << std::endl;
+  auto deck = gameEngine.getDeck();
+  deck->addCardToDeck(new Card(CardType::CT_Reinforcement, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Reinforcement, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Reinforcement, &gameEngine));
+
+  deck->addCardToDeck(new Card(CardType::CT_Airlift, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Airlift, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Airlift, &gameEngine));
+
+  deck->addCardToDeck(new Card(CardType::CT_Diplomacy, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Diplomacy, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Diplomacy, &gameEngine));
+
+  deck->addCardToDeck(new Card(CardType::CT_Bomb, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Bomb, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Bomb, &gameEngine));
+
+  deck->addCardToDeck(new Card(CardType::CT_Blockade, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Blockade, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Blockade, &gameEngine));
+
+
+  gameEngine.loadMap("../res/TestMap1_valid.map");
+
+  auto player1 = new Player(&gameEngine, new Hand(), "Player 1");
+  auto player2 = new Player(&gameEngine, new Hand(), "Player 2");
+  auto player3 = new Player(&gameEngine, new Hand(), "Player 3");
+  auto player4 = new Player(&gameEngine, new Hand(), "Player 4");
+  auto player5 = new Player(&gameEngine, new Hand(), "Player 5");
+  auto player6 = new Player(&gameEngine, new Hand(), "Player 6");
+
+  auto map = gameEngine.getMap();
+  auto continents = map->getContinents();
+
+  for(auto t : *continents->at(0)->getTerritories()){
+    player1->addTerritory(*t);
   }
+
+  for(auto t : *continents->at(1)->getTerritories()){
+    player2->addTerritory(*t);
+  }
+
+  for(auto t : *continents->at(2)->getTerritories()){
+    player3->addTerritory(*t);
+  }
+
+  for(auto t : *continents->at(3)->getTerritories()){
+    player4->addTerritory(*t);
+  }
+
+  for(auto t : *continents->at(4)->getTerritories()){
+    player5->addTerritory(*t);
+  }
+
+  for(auto t : *continents->at(5)->getTerritories()){
+    player6->addTerritory(*t);
+  }
+
+  player1->getHand()->addToHand(new Card(CardType::CT_Reinforcement, &gameEngine));
+  player1->getHand()->addToHand(new Card(CardType::CT_Blockade, &gameEngine));
+  player1->getHand()->addToHand(new Card(CardType::CT_Bomb, &gameEngine));
+  player1->getHand()->addToHand(new Card(CardType::CT_Diplomacy, &gameEngine));
+  player1->getHand()->addToHand(new Card(CardType::CT_Airlift, &gameEngine));
+
+  player2->getHand()->addToHand(new Card(CardType::CT_Reinforcement, &gameEngine));
+  player2->getHand()->addToHand(new Card(CardType::CT_Blockade, &gameEngine));
+  player2->getHand()->addToHand(new Card(CardType::CT_Bomb, &gameEngine));
+  player2->getHand()->addToHand(new Card(CardType::CT_Diplomacy, &gameEngine));
+  player2->getHand()->addToHand(new Card(CardType::CT_Airlift, &gameEngine));
+
+  player3->getHand()->addToHand(new Card(CardType::CT_Reinforcement, &gameEngine));
+  player3->getHand()->addToHand(new Card(CardType::CT_Blockade, &gameEngine));
+  player3->getHand()->addToHand(new Card(CardType::CT_Bomb, &gameEngine));
+  player3->getHand()->addToHand(new Card(CardType::CT_Diplomacy, &gameEngine));
+  player3->getHand()->addToHand(new Card(CardType::CT_Airlift, &gameEngine));
+
+  player4->getHand()->addToHand(new Card(CardType::CT_Reinforcement, &gameEngine));
+  player4->getHand()->addToHand(new Card(CardType::CT_Blockade, &gameEngine));
+  player4->getHand()->addToHand(new Card(CardType::CT_Bomb, &gameEngine));
+  player4->getHand()->addToHand(new Card(CardType::CT_Diplomacy, &gameEngine));
+  player4->getHand()->addToHand(new Card(CardType::CT_Airlift, &gameEngine));
+
+  player5->getHand()->addToHand(new Card(CardType::CT_Reinforcement, &gameEngine));
+  player5->getHand()->addToHand(new Card(CardType::CT_Blockade, &gameEngine));
+  player5->getHand()->addToHand(new Card(CardType::CT_Bomb, &gameEngine));
+  player5->getHand()->addToHand(new Card(CardType::CT_Diplomacy, &gameEngine));
+  player5->getHand()->addToHand(new Card(CardType::CT_Airlift, &gameEngine));
+
+  player6->getHand()->addToHand(new Card(CardType::CT_Reinforcement, &gameEngine));
+  player6->getHand()->addToHand(new Card(CardType::CT_Blockade, &gameEngine));
+  player6->getHand()->addToHand(new Card(CardType::CT_Bomb, &gameEngine));
+  player6->getHand()->addToHand(new Card(CardType::CT_Diplomacy, &gameEngine));
+  player6->getHand()->addToHand(new Card(CardType::CT_Airlift, &gameEngine));
+
+  gameEngine.mainGameLoop();
 }

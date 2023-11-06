@@ -1,311 +1,300 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
+
 #include "Cards/Cards.h"
+#include "Logger/LogObserver.h"
 
 class Card;
+class Player;
+class Territory;
 enum CardType : int;
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Orders
+//
+// -----------------------------------------------------------------------------------------------------------------
+
 // --------------------------------
 // Abstract Order class data members and methods to be implemented by derived classes
 // --------------------------------
-/**
- * @class Order
- * @brief Abstract class defining general order functionalities. Derived classes should implement these functionalities.
- */
 class Order
 {
 public:
-    /**
-     * @brief Returns the label of the order.
-     * @return Label of the order.
-     */
-    virtual std::string getLabel() const = 0;
-
-    /**
-     * @brief Validates the order.
-     * @return True if valid, False otherwise.
-     */
-    virtual bool validate() const = 0;
-
-    /**
-     * @brief Executes the order.
-     */
-    virtual void execute() const = 0;
-
-    /**
-     * @brief Virtual destructor for the Order class.
-     */
-    virtual ~Order() = 0;
-
-    /**
-     * @brief Creates and returns a clone of the order.
-     * @return Pointer to the cloned order.
-     */
-    virtual Order *clone() const = 0;
-
+  virtual ~Order() = default;
+  // gets label
+  virtual std::string getLabel() const = 0;
+  // validates order
+  virtual bool validate() const = 0;
+  // executes order
+  virtual void execute() = 0;
+  // cloner (copy)
+  virtual Order *clone() const = 0;
 private:
-    virtual std::ostream &orderCout(std::ostream &) const = 0;
+  // --------------------------------
+  // Operator Overloads
+  // --------------------------------
+  virtual std::ostream &orderCout(std::ostream &) const = 0;
 
-    /// Overloading the output stream operator for the Order class.
-    friend std::ostream &operator<<(std::ostream &, const Order &);
+  friend std::ostream &operator<<(std::ostream &, const Order &);
 };
 
-/**
- * @class OrdersList
- * @brief Represents a list of orders.
- */
-class OrdersList
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                OrdersList
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+
+class OrdersList : public Subject, ILoggable
 {
 private:
-    std::vector<Order *> orders{}; ///< Vector of pointers to orders.
+  // vector of Order pointers
+  std::vector<Order *> orders{};
+  GameEngine* game;
 
 public:
-    OrdersList() = default; ///< Default constructor for OrdersList.
+  // --------------------------------
+  // Constructors + destructors
+  // --------------------------------
+  explicit OrdersList(GameEngine* gameEngine);
+  ~OrdersList() override;
+  OrdersList(const OrdersList &);
 
-    /**
-     * @brief Destructor for OrdersList.
-     * Ensures all order pointers are deleted.
-     */
-    ~OrdersList();
+  // --------------------------------
+  // Operator Overloads
+  // --------------------------------
+  OrdersList &operator=(const OrdersList &);
 
-    /**
-     * @brief Copy constructor for OrdersList.
-     * @param oldList Reference to the list being copied.
-     */
-    OrdersList(const OrdersList &oldList);
+  // --------------------------------
+  // Adders + mutators
+  // --------------------------------
+  void add(Order *o);
+  void remove(int);
+  void move(int, int);
 
-    /**
-     * @brief Overloading the assignment operator.
-     * @param copyList Reference to the list being assigned/copied.
-     * @return Reference to the updated OrdersList.
-     */
-    OrdersList &operator=(const OrdersList &copyList);
+  // Run user orders and remove them from order list
+  void execute();
 
-    /**
-     * @brief Adds an order to the list.
-     * @param o Pointer to the order to be added.
-     */
-    void add(Order *o);
+  size_t getOrdersListSize();
+  Order* getOrder(int index);
 
-    /**
-     * @brief Removes an order from the list.
-     * @param pos Position of the order in the list.
-     */
-    void remove(int pos);
+  // --------------------------------
+  // Getters
+  // --------------------------------
+  std::vector<Order *>* getList();
 
-    /**
-     * @brief Moves an order from one position to another in the list.
-     * @param pos1 Initial position of the order.
-     * @param pos2 Desired position of the order.
-     */
-    void move(int pos1, int pos2);
-
-    /**
-     * @brief Executes all orders in the list and removes them.
-     */
-    void execute();
-
-    /**
-     * @brief Retrieves a pointer to the list of orders.
-     * @return Pointer to the vector of order pointers.
-     */
-    std::vector<Order *>* getList();
+  // Logging
+  static std::string castOrderType(Order * o);
+  std::string stringToLog() override;
 
 private:
-    /// Overloading the output stream operator for OrdersList.
-    friend std::ostream &operator<<(std::ostream &, const OrdersList &);
+  // --------------------------------
+  // ostream overload
+  // --------------------------------
+  friend std::ostream &operator<<(std::ostream &, const OrdersList &);
 };
 
-/**
- * @class Advance
- * @brief Derived class representing an Advance order.
- */
-class Advance : public Order
-{
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Advance
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+class Advance : public Order, Subject, ILoggable{
+private:
+  GameEngine* game;
+  Player* currentPlayer;
+  Territory* source;
+  Territory* target;
+  int amount = 0;
+
 public:
-    /**
-     * @brief Retrieves the label for the Advance order.
-     * @return Label of the order.
-     */
-    std::string getLabel() const override;
-
-    /**
-     * @brief Validates the Advance order.
-     * @return True if the order is valid, otherwise False.
-     */
-    bool validate() const override;
-
-    /**
-     * @brief Executes the Advance order.
-     */
-    void execute() const override;
-
-    /**
-     * @brief Destructor for the Advance order.
-     */
-    ~Advance() override;
+  Advance(GameEngine* game, Territory* src, Territory* dest, Player* player, int amount);
+  ~Advance() override;
+  std::string getLabel() const override;
+  bool validate() const override;
+  void execute() override;
+  std::string stringToLog() override;
+  static void attackSimulation(Territory*, Territory*, Player*, int);
 
 private:
-    static const std::string label; ///< Label for the Advance order.
-
-    /**
-     * @brief Creates and returns a deep copy (clone) of the Advance order.
-     * @return Pointer to the cloned Advance order.
-     */
-    Order *clone() const override;
-
-    /**
-     * @brief Prints the details of the Advance order to the provided output stream.
-     * @param output Output stream to which the order details are printed.
-     * @return Modified output stream.
-     */
-    std::ostream &orderCout(std::ostream &) const override;
+  const static std::string label;
+  Order *clone() const override;
+  std::ostream &orderCout(std::ostream &) const override;
 };
 
-/**
- * @class Airlift
- * @brief Derived class representing an Airlift order.
- */
-class Airlift : public Order
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Airlift
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+
+class Airlift : public Order, Subject, ILoggable
 {
+private:
+  GameEngine* game;
+  Player* currentPlayer;
+  Territory* source;
+  Territory* target;
+  int amount = 0;
+
 public:
-    std::string getLabel() const override;
-    bool validate() const override;
-    void execute() const override;
-    ~Airlift() override;
+  Airlift(GameEngine* game, Territory* source, Territory* target, Player* player, int amount);
+  ~Airlift() override;
+  std::string getLabel() const override;
+  bool validate() const override;
+  void execute() override;
+  std::string stringToLog() override;
 
 private:
-    static const std::string label; ///< Label for the Airlift order.
-    Order *clone() const override;
-    std::ostream &orderCout(std::ostream &) const override;
+  const static std::string label;
+  Order *clone() const override;
+  std::ostream &orderCout(std::ostream &) const override;
 };
 
-/**
- * @class Blockade
- * @brief Derived class representing a Blockade order.
- */
-class Blockade : public Order
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Blockade
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+
+
+class Blockade : public Order, Subject, ILoggable
 {
+private:
+  GameEngine* game;
+  Territory* target;
+  Player* currentPlayer;
+
 public:
-    std::string getLabel() const override;
-    bool validate() const override;
-    void execute() const override;
-    ~Blockade() override;
+  Blockade(GameEngine* game, Territory* target, Player* player);
+  ~Blockade() override;
+  std::string getLabel() const override;
+  bool validate() const override;
+  void execute() override;
+  std::string stringToLog() override;
 
 private:
-    static const std::string label; ///< Label for the Blockade order.
-    Order *clone() const override;
-    std::ostream &orderCout(std::ostream &) const override;
+  const static std::string label;
+  Order *clone() const override;
+  std::ostream &orderCout(std::ostream &) const override;
 };
 
-/**
- * @class Bomb
- * @brief Derived class representing a Bomb order.
- */
-class Bomb : public Order
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Bomb
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+
+class Bomb : public Order, Subject, ILoggable
 {
+private:
+  GameEngine* game;
+  Territory* target;
+  Player* currentPlayer;
+
 public:
-    /**
-     * @brief Retrieves the label for the Bomb order.
-     * @return Label of the order.
-     */
-    std::string getLabel() const override;
-
-    /**
-     * @brief Validates the Bomb order.
-     * @return True if the order is valid, otherwise False.
-     */
-    bool validate() const override;
-
-    /**
-     * @brief Executes the Bomb order.
-     */
-    void execute() const override;
-
-    /**
-     * @brief Destructor for the Bomb order.
-     */
-    ~Bomb() override;
+  Bomb(GameEngine* game, Territory* target, Player* player);
+  ~Bomb() override;
+  std::string getLabel() const override;
+  bool validate() const override;
+  void execute() override;
+  std::string stringToLog() override;
 
 private:
-    static const std::string label; ///< Label for the Bomb order.
+  const static std::string label;
+  Order *clone() const override;
+  std::ostream &orderCout(std::ostream &) const override;
 
-    /**
-     * @brief Creates and returns a deep copy (clone) of the Bomb order.
-     * @return Pointer to the cloned Bomb order.
-     */
-    Order *clone() const override;
-
-    /**
-     * @brief Prints the details of the Bomb order to the provided output stream.
-     * @param output Output stream to which the order details are printed.
-     * @return Modified output stream.
-     */
-    std::ostream &orderCout(std::ostream &) const override;
 };
 
-/**
- * @class Deploy
- * @brief Derived class representing a Deploy order.
- */
-class Deploy : public Order
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Deploy
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+
+class Deploy : public Order, Subject, ILoggable
 {
+private:
+  GameEngine* game;
+  Player* currentPlayer;
+  Territory* target;
+  int amount;
+
 public:
-    std::string getLabel() const override;
-    bool validate() const override;
-    void execute() const override;
-    ~Deploy() override;
+  Deploy(GameEngine* game, Territory* target, Player* player, int amount);
+  ~Deploy() override;
+  std::string getLabel() const override;
+  bool validate() const override;
+  void execute() override;
+  std::string stringToLog() override;
 
 private:
-    static const std::string label; ///< Label for the Deploy order.
-    Order *clone() const override;
-    std::ostream &orderCout(std::ostream &) const override;
+  const static std::string label;
+  Order* clone() const override;
+  std::ostream &orderCout(std::ostream &) const override;
+
 };
 
-/**
- * @class Negotiate
- * @brief Derived class representing a Negotiate order.
- */
-class Negotiate : public Order
+
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Negotiate
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+class Negotiate : public Order, Subject, ILoggable
 {
+private:
+  GameEngine* game;
+  Player* currentPlayer;
+  Player* targetPlayer;
+  std::vector<Player*> friendlyPlayers;
+
 public:
-    std::string getLabel() const override;
-    bool validate() const override;
-    void execute() const override;
-    ~Negotiate() override;
+  Negotiate(GameEngine* game, Player* currentPlayer, Player* targetPlayer);
+  ~Negotiate() override;
+  std::string getLabel() const override;
+  bool validate() const override;
+  void execute() override;
+  std::string stringToLog() override;
 
 private:
-    static const std::string label; ///< Label for the Negotiate order.
-    Order *clone() const override;
-    std::ostream &orderCout(std::ostream &) const override;
-};
-
-/**
- * @class UserInputOrder
- * @brief A class to create an order based on user input.
- */
-class UserInputOrder
-{
-public:
-    /**
-     * @brief Factory method to create a specific order type based on a string.
-     * @param orderType The type of order as a string.
-     * @return Pointer to the created Order object.
-     */
-    static Order *create(const std::string&) ;
-};
-
-/**
- * @class OrdersFactory
- * @brief Factory class to create Order objects based on card types.
- */
-class OrdersFactory
-{
-public:
-    /**
-     * @brief Factory method to create a specific order type based on a CardType.
-     * @param cardType The type of card to base the order creation on.
-     * @return Pointer to the created Order object.
-     */
-    static Order* CreateOrder(CardType cardType);
+  const static std::string label;
+  Order *clone() const override;
+  std::ostream &orderCout(std::ostream &) const override;
 };

@@ -7,234 +7,281 @@
 #include <algorithm>
 #include <unordered_map>
 #include <fstream>
+
+
 #include "GameEngine/GameEngine.h"
 #include "Player/Player.h"
 
-/// Forward declarations
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Territory
+//
+// ----------------------------------------------------------------------------------------------------------------
+
 class Continent;
 class GameEngine;
 class Player;
 
-/**
- * @class Territory
- * @brief Represents a territory in the game world.
- */
-class Territory {
+class Territory
+{
 private:
-    Continent* continent; ///< Pointer to the Continent this territory belongs to.
-    std::string name; ///< Name of the territory.
-    std::vector<Territory*> adjacentTerritories; ///< Territories adjacent to this one.
+  Continent* continent;
+  std::string name;
+  std::vector<Territory*> adjacentTerritories;
 
-    int armies = 0; ///< Number of armies present in this territory.
-    int ownerId = -1; ///< ID of the player who owns this territory.
-    Player* player; ///< Pointer to the Player who owns this territory.
+  int armies = 0;
+  Player* player;
 
-    int x = -1; ///< X-coordinate for UI.
-    int y = -1; ///< Y-coordinate for UI.
+  int x = -1;
+  int y = -1;
 
 public:
-    /// Explicit constructor for Territory.
-    explicit Territory(std::string name);
-    /// Copy constructor.
-    Territory(const Territory &other);
-    /// Get the name of the territory.
-    std::string getName();
-    /// Get adjacent territories.
-    std::vector<Territory *>* getAdjacentTerritories();
-    /// Set the ID of the owner.
-    void setOwnerId(int id);
-    /// Get the ID of the owner.
-    int getOwnerId() const;
-    /// Get the number of armies.
-    int getArmies() const;
-    /// Set the number of armies.
-    void setArmies(int);
-    /// Get the owner player.
-    Player* getPlayer();
-    /// Set the owner player.
-    void setPlayer(Player*);
-    /// Get X coordinate.
-    int getX() const;
-    /// Get Y coordinate.
-    int getY() const;
-    /// Set X coordinate.
-    void setX(int x);
-    /// Set Y coordinate.
-    void setY(int y);
-    /// Get the continent.
-    Continent* getContinent();
-    /// Set the continent.
-    void setContinent(Continent* c);
-    /// Remove army units.
-    int removeArmyUnits(int);
-    /// Add army units.
-    int addArmyUnits(int);
-    /// Add an adjacent territory.
-    void addAdjacentTerritory(Territory* territory);
-    /// Assignment operator.
-    Territory& operator=(const Territory& other);
-    /// Stream insertion operator.
-    friend std::ostream& operator<<(std::ostream& stream, const Territory& other);
-};
+  // ----------------------------------------
+  // Constructors
+  // ----------------------------------------
+  explicit Territory(std::string name);
+  Territory(const Territory &other);
 
-/**
- * @class Map
- * @brief Represents a map in the game containing territories and continents.
- */
-class Map {
-private:
-    std::string name; ///< Name of the map.
-    std::string image; ///< Image path for the map.
-    std::string author; ///< Author of the map.
+  std::string getName();
+  std::vector<Territory *>* getAdjacentTerritories();
+  // ----------------------------------------
+  // getters and setters
+  // ----------------------------------------
+  int getArmies() const;
+  void setArmies(int);
 
-    bool wrap{};  ///< Wrap setting.
-    bool scroll{};  ///< Scroll setting.
-    bool warn{};  ///< Warn setting.
+  Player* getPlayer();
+  void setPlayer(Player*);
 
-    std::vector<Territory*> territories;  ///< List of territories in the map.
-    std::vector<Continent*> continents;  ///< List of continents in the map.
+  int getX() const;
+  int getY() const;
 
-    GameEngine* game;  ///< Pointer to the game engine.
+  void setX(int x);
+  void setY(int y);
 
-    bool isMapStronglyConnected();  ///< Checks if the map is strongly connected.
-    bool isTerritories1to1Continents();  ///< Checks territory to continent mapping.
-    void DFS(Territory* territory, std::vector<Territory*>& visited);  ///< Depth-first search.
-    bool isTerritoryStronglyConnected(Territory* territory);  ///< Checks if a territory is strongly connected.
+  // ----------------------------------------
+  // adders and removers
+  // ----------------------------------------
+
+  Continent* getContinent();
+  void setContinent(Continent* c);
+
+  int removeArmyUnits(int);
+  int addArmyUnits(int);
+
+  void addAdjacentTerritory(Territory* territory);
+
+  // ----------------------------------------
+  // Operator Overloads
+  // ----------------------------------------
+  Territory& operator=(const Territory& other);
 
 public:
-    /// Explicit constructor for Map.
-    explicit Map(GameEngine* game);
-    /// Destructor for Map.
-    ~Map();
-    /// Validates the map.
-    bool validate();
-    // Resets the map initialization
-    void resetMap();
-    /// Copy constructor for Map.
-    Map(const Map &other);
-    /// Assignment operator for Map.
-    Map& operator=(const Map& other);
+  // ----------------------------------------
+  // ostream overload
+  // ----------------------------------------
+  friend std::ostream& operator<<(std::ostream& stream, const Territory& other);
 
-    /// Adds a continent to the map.
-    void addContinent(Continent* continent);
-    /// Adds a territory to the map.
-    void addTerritory(Territory* territory);
-
-    /// Sets the name of the map.
-    void setName(std::string _name);
-    /// Gets the name of the map.
-    std::string getName();
-    /// Sets the image of the map.
-    void setImage(std::string _image);
-    /// Gets the image of the map.
-    std::string getImage();
-    /// Sets the author of the map.
-    void setAuthor(std::string author);
-    /// Gets the author of the map.
-    std::string getAuthor();
-    /// Sets the wrap setting of the map.
-    void setWrap(bool wrap);
-    /// Gets the wrap setting of the map.
-    bool getWrap() const;
-    /// Sets the scroll setting of the map.
-    void setScroll(bool scroll);
-    /// Gets the scroll setting of the map.
-    bool getScroll() const;
-    /// Sets the warn setting of the map.
-    void setWarn(bool warn);
-    /// Gets the warn setting of the map.
-    bool getWarn() const;
-    /// Gets the list of territories.
-    std::vector<Territory *> * getTerritories();
-    /// Gets the list of continents.
-    std::vector<Continent *> * getContinents();
-
-    /// Stream insertion operator.
-    friend std::ostream& operator<<(std::ostream& stream, const Map& other);
 };
 
-/**
- * @class Continent
- * @brief Represents a continent in the game.
- */
-class Continent {
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Map
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+class Map
+{
+public:
+  std::vector<Continent*> continents;
+
 private:
-    std::string name; ///< Name of the continent.
-    int bonus; ///< Bonus armies for owning this continent.
-    std::vector<Territory*> territories; ///< Territories within this continent.
+  std::string name;
+  std::string image;
+  std::string author;
+
+  bool wrap{};
+  bool scroll{};
+  bool warn{};
+
+  std::vector<Territory*> territories;
+
+
+  // Object Owner
+  GameEngine* game;
+
+private:
+  bool isMapStronglyConnected();
+  bool isTerritories1to1Continents();
+  void DFS(Territory* territory, std::vector<Territory*>& visited);
+  bool isTerritoryStronglyConnected(Territory* territory);
 
 public:
-    /// Constructor for Continent.
-    Continent(std::string name, int bonus);
-    /// Copy constructor for Continent.
-    Continent(const Continent& other);
+  // --------------------------------------------------
+  // Destructors + Constructors + Operator Overloads
+  // --------------------------------------------------
+  explicit Map(GameEngine* game);
+  ~Map();
+  bool validate();
 
-    /// Adds a territory to this continent.
-    void addTerritory(Territory* territory);
-    /// Gets the name of the continent.
-    std::string getName();
-    /// Gets the bonus for owning this continent.
-    int getBonus() const;
-    /// Gets the territories within this continent.
-    std::vector<Territory *> * getTerritories();
+  Map(const Map &other);
+  Map& operator=(const Map& other);
 
-    /// Assignment operator for Continent.
-    Continent& operator=(const Continent& other);
+  // --------------------------------------------------
+  // map adders
+  // --------------------------------------------------
+  void addContinent(Continent* continent);
+  void addTerritory(Territory* territory);
 
-    /// Stream insertion operator.
-    friend std::ostream& operator<<(std::ostream& stream, const Continent& other);
+  // --------------------------------------------------
+  // setters
+  // --------------------------------------------------
+  void setName(std::string _name);
+  void setImage(std::string _image);
+  void setAuthor(std::string author);
+  void setWrap(bool wrap);
+  void setScroll(bool scroll);
+  void setWarn(bool warn);
+
+  // --------------------------------------------------
+  // getters
+  // --------------------------------------------------
+  std::string getName();
+  std::string getImage();
+  std::string getAuthor();
+  bool getWrap() const;
+  bool getScroll() const;
+  bool getWarn() const;
+  std::vector<Territory *> * getTerritories();
+  std::vector<Continent *> * getContinents();
+
+public:
+  friend std::ostream& operator<<(std::ostream& stream, const Map& other);
 };
 
-/**
- * @class MapLoader
- * @brief Static class for loading maps.
- */
-class MapLoader {
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Continent
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+
+class Continent
+{
+public:
+    std::vector<Territory*> territories;
+
 private:
-    /// Reading states for parsing map files.
-    enum ReadingState {
-        ReadingState_Idle,
-        ReadingState_Map,
-        ReadingState_Continents,
-        ReadingState_Territories
-    };
+  std::string name;
+  int bonus;
 
-    /// Stores the state of the map loader.
-    struct MapLoaderState {/// Map of territories by name.
-        std::unordered_map<std::string, Territory*> territories;
-        /// Map of territories to be created.
-        std::unordered_map<std::string, Territory*> territoriesToCreate;
-        /// Map of continents by name.
-        std::unordered_map<std::string, Continent*> continents;
-        /// Current parsing state.
-        ReadingState parseState = ReadingState_Idle;
-    };
+public:
+  // ----------------------------------------
+  // Constructors
+  // ----------------------------------------
+  Continent(std::string name, int bonus);
+  Continent(const Continent& other);
 
-    /// Parses a line from the map file.
-    static void parseLine(std::string &line, Map* map, MapLoaderState& mapLoaderState);
 
-    /// Trims the left whitespace of a string.
-    static std::string ltrim(const std::string &s);
+  // ----------------------------------------
+  // Adders
+  // ----------------------------------------
+  void addTerritory(Territory* territory);
 
-    /// Trims the right whitespace of a string.
-    static std::string rtrim(const std::string &s);
+  // ----------------------------------------
+  // Getters
+  // ----------------------------------------
+  std::string getName();
+  int getBonus() const;
+  std::vector<Territory *> * getTerritories();
 
-    /// Trims the left and right whitespace of a string.
+  // ----------------------------------------
+  // Operator Overloads
+  // ----------------------------------------
+  Continent& operator=(const Continent& other);
+public:
+  // ----------------------------------------
+  // Ostream Overload
+  // ----------------------------------------
+  friend std::ostream& operator<<(std::ostream& stream, const Continent& other);
+};
+
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Map Loader
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+
+
+class Map;
+
+// Static Class
+class MapLoader
+{
+private:
+
+  // ----------------------------------------
+  // State Enum
+  // ----------------------------------------
+  enum ReadingState
+  {
+    ReadingState_Idle,
+    ReadingState_Map,
+    ReadingState_Continents,
+    ReadingState_Territories
+  };
+
+  // ----------------------------------------
+  // Map Loader Data / State
+  // ----------------------------------------
+  struct MapLoaderState
+  {
+    std::unordered_map<std::string, Territory*> territories;
+    // territories to add to the map
+    std::unordered_map<std::string, Territory*> territoriesToCreate;
+    // continent name -> Continent
+    std::unordered_map<std::string, Continent*> continents;
+    ReadingState parseState = ReadingState_Idle;
+  };
+
+  // ----------------------------------------
+  // Map Loader Parse Line
+  // ----------------------------------------
+  static void parseLine(std::string &line, Map* map, MapLoaderState& mapLoaderState);
+
+  // ----------------------------------------
+  // Map Loader Line Trim Utilities
+  // ----------------------------------------
+  static std::string ltrim(const std::string &s);
+  static std::string rtrim(const std::string &s);
+
+public:
     static std::string trim(const std::string &s);
+  // ----------------------------------------
+  // Map Loader Load File
+  // ----------------------------------------
+  static void load(const std::string& path, Map* out_map);
+
+  // ----------------------------------------
+  // Map loader is a static class and should not have any constructor or assignment operator overloaded.
+  // ----------------------------------------
+  MapLoader() = delete;
+  MapLoader(const MapLoader &other) = delete;
+  MapLoader& operator=(const MapLoader& other) = delete;
 
 public:
-    /// Loads a map from a file.
-    static void load(const std::string& path, Map* out_map);
-
-    /// Deleted constructor.
-    MapLoader() = delete;
-
-    /// Deleted copy constructor.
-    MapLoader(const MapLoader &other) = delete;
-
-    /// Deleted assignment operator.
-    MapLoader& operator=(const MapLoader& other) = delete;
-
-    /// Deleted stream insertion operator.
-    friend std::ostream& operator<<(std::ostream& stream, const MapLoader& other) = delete;
+  // ----------------------------------------
+  // Map loader cannot be instantiated and therefore cannot be printed out.
+  // ----------------------------------------
+  friend std::ostream& operator<<(std::ostream& stream, const MapLoader& other) = delete;
 };

@@ -1,48 +1,70 @@
 #include "Orders.h"
 #include "OrdersDriver.h"
 #include "GameEngine/GameEngine.h"
+using namespace std;
 
-/**
- * @brief Function to test the functionality of Orders and OrdersList.
- * 
- * This function showcases various actions that can be performed with Orders and OrdersList such as adding, moving, removing, and executing orders. 
- * The orders are created using a factory method, and their behavior is tested in the context of a GameEngine and Player.
- */
-void testOrdersLists()
+void testOrderExecution()
 {
-    /// Initialize the game engine and the player
-    auto gameEngine = new GameEngine;
-    auto player = new Player(gameEngine, new Hand(), "Player");
+  // arrange
+  // mocking argc and argv
+  int argc = 1;
+  char* argv[] = {(char*)"-console"};
+  // create a game engine
+  auto gameEngine = GameEngine(argc, argv);
 
-    /// Add player to the game engine
-    gameEngine->addPlayer(player);
+  // add cards to the gameEngine deck
+  auto deck = gameEngine.getDeck();
+  deck->addCardToDeck(new Card(CardType::CT_Reinforcement, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Reinforcement, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Reinforcement, &gameEngine));
 
-    /// Fetch the player's OrdersList object
-    auto orderList = player->getOrdersListObject();
+  deck->addCardToDeck(new Card(CardType::CT_Airlift, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Airlift, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Airlift, &gameEngine));
 
-    std::cout << "-> Order Addition" << std::endl;
+  deck->addCardToDeck(new Card(CardType::CT_Diplomacy, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Diplomacy, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Diplomacy, &gameEngine));
 
-    /// Add various types of orders to the OrdersList
-    orderList->add(UserInputOrder::create("Deploy"));
-    orderList->add(UserInputOrder::create("Advance"));
-    orderList->add(UserInputOrder::create("Bomb"));
-    orderList->add(UserInputOrder::create("Blockade"));
-    orderList->add(UserInputOrder::create("Airlift"));
-    orderList->add(UserInputOrder::create("Negotiate"));
+  deck->addCardToDeck(new Card(CardType::CT_Bomb, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Bomb, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Bomb, &gameEngine));
 
-    std::cout << "-> Move 4 with 2 and remove the new 2" << std::endl;
+  deck->addCardToDeck(new Card(CardType::CT_Blockade, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Blockade, &gameEngine));
+  deck->addCardToDeck(new Card(CardType::CT_Blockade, &gameEngine));
 
-    /// Move and remove specific orders in the OrdersList
-    orderList->move(4, 2);
-    orderList->remove(2);
 
-    auto list = *orderList->getList();
+  // load a map before game starts
+  gameEngine.loadMap("../res/TestMap1_valid.map");
 
-    std::cout << "-> Orders can be validated" << std::endl;
-    std::cout << "Example: First Order is valid: " << (orderList->getList()->at(0)->validate() ? "True": "False") << endl;
+  // create players
+  auto player1 = new Player(&gameEngine, new Hand(), "Rick Astley");
+  auto player2 = new Player(&gameEngine, new Hand(), "Bob Ross");
+  auto player3 = new Player(&gameEngine, new Hand(), "Felix Kjellberg");
 
-    std::cout << "-> List order execution" << std::endl;
+  // adding sets of territories just for testing
+  auto map = gameEngine.getMap();
+  auto continents = map->getContinents();
 
-    /// Execute all the orders in the OrdersList
-    orderList->execute();
+  for(auto t : *continents->at(0)->getTerritories()){
+    player1->addTerritory(*t);
+  }
+
+  for(auto t : *continents->at(1)->getTerritories()){
+    player2->addTerritory(*t);
+  }
+
+  for(auto t : *continents->at(2)->getTerritories()){
+    player3->addTerritory(*t);
+  }
+
+
+  player1->getHand()->addToHand(new Card(CardType::CT_Reinforcement, &gameEngine));
+  player1->getHand()->addToHand(new Card(CardType::CT_Blockade, &gameEngine));
+  player1->getHand()->addToHand(new Card(CardType::CT_Bomb, &gameEngine));
+  player1->getHand()->addToHand(new Card(CardType::CT_Diplomacy, &gameEngine));
+  player1->getHand()->addToHand(new Card(CardType::CT_Airlift, &gameEngine));
+
+  gameEngine.mainGameLoop();
 }

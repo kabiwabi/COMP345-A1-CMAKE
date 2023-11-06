@@ -1,58 +1,43 @@
 #include "Cards.h"
-
 using namespace std;
 
-/**
- * @brief Constructor for Card class.
- *
- * @param type Type of card being constructed.
- * @param game Pointer to the GameEngine object.
- */
+//Card constructor with a type parameter
 Card::Card(const CardType& type, GameEngine* game)
 : cardType(type), game(game)
 {
   if(game == nullptr){throw std::runtime_error("Card::Error | Cannot set Card Game Engine to null");}
 }
 
-/**
- * @brief Copy constructor for Card class.
- *
- * @param initial Reference to the Card object being copied.
- */
+//Copy constructor
 Card::Card(const Card &initial)
   : cardType(initial.cardType), game(initial.game)
 {
   if(game == nullptr){throw std::runtime_error("Card::Error | Cannot set Card Game Engine to null");}
 }
 
-
-/**
- * @brief Sets the type for the card.
- *
- * @param type The new type to set for the card.
- */
-void Card::setCardType(CardType& type)
+void Card::setCardType(const CardType& type)
 {
     cardType = type;
 }
 
-/**
- * @brief Gets the card type.
- *
- * @return Returns the type of the card.
- */
 CardType Card::getCardType()
 {
     return cardType;
 }
 
-/**
- * @brief Executes the card's play functionality.
- */
 void Card::play() {
   // check to see whose turn it is
   Player* currentPlayer = game->getCurrentPlayerTurn();
-  currentPlayer->issueOrder(cardType);
+  auto orders = currentPlayer->getOrdersListObject();
+  auto order = currentPlayer->decideOrder(cardType);
+
+  if(order){orders->add(order);}
+  else if (cardType != CardType::CT_Reinforcement) {
+    cout << "Order was not decided " << currentPlayer->getName() << ". Skipping card..." << endl;
+    return;
+  }
+
+
   Card* card = currentPlayer->getHand()->removeCard(cardType);
 
   if(card == nullptr){ throw std::runtime_error(&"Hand did not contain card type: " [cardType]); }
@@ -60,55 +45,27 @@ void Card::play() {
   gameDeck->addCardToDeck(card);
 }
 
-/*
- *
- */
-std::ostream& operator<<(std::ostream& os, const Card& c) {
-    os << "Card: ";
-    switch (c.cardType)
-    {
-        case 0:
-        {
-            os << "Bomb" << std::endl;
-            break;
-        }
-        case 1:
-        {
-            os << "Reinforcement" << std::endl;
-            break;
-        }
-        case 2:
-        {
-            os << "Blockade" << std::endl;
-            break;
-        }
-        case 3:
-        {
-            os << "Airlift" << std::endl;
-            break;
-        }
-        case 4:
-        {
-            os << "Diplomacy" << std::endl;
-            break;
-        }
-        default:
-            break;
-    }
-
-    return os;
+std::string Card::CardTypeToString(CardType& c) {
+  switch (c) {
+    case CT_Bomb:
+      return "Bomb";
+    case CT_Reinforcement:
+      return "CT_Reinforcement";
+    case CT_Blockade:
+      return "Blockade";
+    case CT_Airlift:
+      return "Airlift";
+    case CT_Diplomacy:
+      return "Diplomacy";
+    default:
+      throw std::runtime_error("ASSERT: Invalid Card Type");
+  }
 }
 
-/**
- * @brief Destructor for Card class.
- */
+// Destructor
 Card::~Card() = default;
 
-/**
- * @brief Copy constructor for Hand class.
- *
- * @param initial Reference to the Hand object being copied.
- */
+//Copy construct
 Hand::Hand(const Hand &initial)
 {
   for (auto &&temp : initial.handCards) {
@@ -116,9 +73,7 @@ Hand::Hand(const Hand &initial)
   }
 };
 
-/**
- * @brief Destructor for Hand class.
- */
+//Destruct
 Hand::~Hand()
 {
   for (auto card : handCards) {
@@ -127,31 +82,10 @@ Hand::~Hand()
   handCards.clear();
 }
 
-std::ostream& operator<<(std::ostream& os, const Hand& h) {
-    os << "\nHand contains the following cards:" << std::endl;
-
-    for (Card* c : h.handCards)
-    {
-        os << *c;
-    }
-    return os;
-}
-
-/**
- * @brief Gets all the cards in hand.
- *
- * @return Returns a pointer to the vector containing all the cards in hand.
- */
 std::vector<Card *> *Hand::getCards() {
   return &this->handCards;
 }
 
-/**
- * @brief Retrieves a card from the hand given an index.
- *
- * @param index The index of the card to retrieve.
- * @return Returns a pointer to the card at the specified index.
- */
 Card *Hand::getCardFromHand(int index) {
   if (index < 0 || index >= handCards.size()){
     throw std::invalid_argument("Index out of range.");
@@ -159,11 +93,6 @@ Card *Hand::getCardFromHand(int index) {
   return handCards.at(index);
 }
 
-/**
- * @brief Adds a card to the hand.
- *
- * @param card The card to be added.
- */
 void Hand::addToHand(Card *card) {
   if(card == nullptr){
     throw std::invalid_argument("Card is a nullptr.");
@@ -171,16 +100,11 @@ void Hand::addToHand(Card *card) {
   handCards.push_back(card);
 }
 
-/**
- * @brief Removes a card of a given type from the hand.
- *
- * @param type The type of card to remove.
- * @return Returns a pointer to the removed card.
- */
 Card* Hand::removeCard(CardType type) {
 
   for(int i = 0; i < handCards.size(); i++){
-    if(handCards.at(i)->getCardType() == type){
+    auto cardType = handCards.at(i)->getCardType();
+    if(cardType == (int)type){
       Card* card = handCards.at(i);
       handCards.erase(handCards.begin() + i);
       return card;
@@ -189,26 +113,23 @@ Card* Hand::removeCard(CardType type) {
   return nullptr;
 }
 
-/**
- * @brief Default constructor for the Hand class.
- */
 Hand::Hand() {
   handCards = vector<Card*>();
 }
 
-/**
- * @brief Constructor for Deck class.
- *
- * @param game Pointer to the GameEngine object.
- */
+
+
+
+
+
+//Default constructor
 Deck::Deck(GameEngine* game)
-    :game(game)
-{}
+        :game(game)
+{
+    if(game == nullptr){throw std::runtime_error("Deck::Error | Cannot set deck Game Engine to null");}
+}
 
-
-/**
- * @brief Destructor for Deck class.
- */
+//Destructor
 Deck::~Deck()
 {
   for (auto card : deckCards)  {
@@ -217,11 +138,7 @@ Deck::~Deck()
   deckCards.clear();
 }
 
-/**
- * @brief Copy constructor for Deck class.
- *
- * @param initial Reference to the Deck object being copied.
- */
+//copy constructor
 Deck::Deck(const Deck &initial)
 {
   this->game = initial.game;
@@ -230,26 +147,7 @@ Deck::Deck(const Deck &initial)
   }
 }
 
-/**
- * @brief Prints whats in the deck to the OS
- *
- * @param os Reference to the output stream.
- * @param d Reference to the Deck object.
- */
-std::ostream& operator<<(std::ostream& os, const Deck& d) {
-    os << "\nDeck contains the following cards:"<< std::endl;
-    for(Card* c : d.deckCards)
-    {
-        os << *c;
-    }
-    return os;
-}
-
-/**
- * @brief Draws a card from the deck to a player's hand.
- *
- * @param currentHand The player's hand to which the card will be added.
- */
+//draw card from the deck of hand
 void Deck::draw(Hand& currentHand)
 {
   if (deckCards.empty())
@@ -260,29 +158,17 @@ void Deck::draw(Hand& currentHand)
   currentHand.addToHand(c);
 }
 
-/**
- * @brief Shuffles the deck of cards.
- */
+//method shuffling the deck of hand
 void Deck::shuffleDeck()
 {
   std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
   std::shuffle(std::begin(deckCards), std::end(deckCards), rng);
 }
 
-/**
- * @brief Adds a card to the deck.
- *
- * @param card The card to be added to the deck.
- */
 void Deck::addCardToDeck(Card* card) {
   deckCards.push_back(card);
 }
 
-/**
- * @brief Removes a card randomly from the deck.
- *
- * @return Returns a pointer to the removed card.
- */
 Card *Deck::removeCardRandom() {
   // randomly get a card from the deck
   std::random_device dev;
@@ -296,11 +182,35 @@ Card *Deck::removeCardRandom() {
   return c;
 }
 
-/**
- * @brief Gets all the cards in the deck.
- *
- * @return Returns a pointer to the vector containing all the cards in the deck.
- */
 std::vector<Card *> *Deck::getDeckCards() {
   return &this->deckCards;
 };
+
+//for the testing purpose
+void Deck::create_deck() {
+// Assign 40 cards in deck vector, each type has 8 cards, 5 types
+for (int i = 0; i < 8; i++) {
+  for (int j = 0; j < 5; j++) {
+    // Type 1 = Bomb
+    if (j == 0) {
+      deckCards.push_back(new Card(CardType::CT_Bomb, game));
+    }
+    // Type 2 = Reinforcement
+    else if (j == 1) {
+      deckCards.push_back(new Card(CardType::CT_Reinforcement, game));
+    }
+    // Type 3 = Blockade
+    else if (j == 2) {
+      deckCards.push_back(new Card(CardType::CT_Blockade, game));
+    }
+    // Type 4 = Airlift
+    else if (j == 3) {
+      deckCards.push_back(new Card(CardType::CT_Airlift, game));
+    }
+    // Type 5 = Diplomacy
+    else if (j == 4) {
+      deckCards.push_back(new Card(CardType::CT_Diplomacy, game));
+    }
+  }
+}
+}

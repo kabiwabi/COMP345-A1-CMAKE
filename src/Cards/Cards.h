@@ -15,9 +15,9 @@ class Player;
 
 using namespace std;
 
-/**
- * @brief Enumerations representing different types of cards.
- */
+// --------------------------------
+// enum for type of card (public)
+// --------------------------------
 enum CardType: int {
   CT_Bomb = 0,
   CT_Reinforcement,
@@ -26,169 +26,100 @@ enum CardType: int {
   CT_Diplomacy
 };
 
-/**
- * @brief Represents a card used in the game.
- */
 class Card
 {
 private:
+  //type of each card
   CardType cardType;
+
+  // Object Owner
   GameEngine* game;
 
 public:
-    /**
-     * @brief Executes the functionality of the card when played.
-     */
+  // --------------------------------
+  // Play Card
+  // --------------------------------
   void play();
 
-    /**
-     * @brief Constructor with card type and game engine parameters.
-     * @param type Type of the card.
-     * @param game Pointer to the game engine.
-     */
+  // --------------------------------
+  // Constructors
+  // --------------------------------
   explicit Card(const CardType& type, GameEngine* game);
-      /**
-       * @brief Copy constructor.
-       * @param initial The card to be copied.
-       */
   Card(const Card &initial);
-      /**
-       * @brief Copy constructor.
-       */
+
+  // --------------------------------
+  // Destructor
+  // --------------------------------
   ~Card();
 
-    /**
-     * @brief Sets the card type.
-     * @param type The new type of the card.
-     */
-  void setCardType(CardType& type);
-    /**
-     * @brief Gets the card type.
-     * @return The type of the card.
-     */
+  // --------------------------------
+  // Setters + Getters
+  // --------------------------------
+  void setCardType(const CardType& type);
   CardType getCardType();
 
-  /*
-   * @brief Outputs what the card is
-   * @param os reference to the OS
-   * @param c reference to the card.
-   */
-  friend std::ostream& operator<<(std::ostream& os, const Card& c);
+  // --------------------------------
+  // Static Method to Map CardType Enum to String
+  // --------------------------------
+  static std::string CardTypeToString(CardType& c);
 };
 
-/**
- * @brief Represents a hand containing multiple cards.
- */
+
+
 class Hand
 {
 private:
-
+  //hand pointer vector
 
 public:
   std::vector<Card *> handCards;
-    /**
-     * @brief Default constructor.
-     */
+  //default constructor
   Hand();
-    /**
-     * @brief Destructor.
-     */
+  //destruct
   ~Hand();
-    /**
-     * @brief Copy constructor.
-     * @param initial The hand to be copied.
-     */
+  //hand copy constructor
   Hand(const Hand &initial);
-    /**
-     * @brief Retrieves the cards in the hand.
-     * @return Pointer to the vector of cards in the hand.
-     */
+  // getter handCards
   std::vector<Card *>* getCards();
-    /**
-    * @brief Retrieves a specific card from the hand.
-    * @param index Index of the card in the hand.
-    * @return Pointer to the card.
-    */
+  // get card from handCards
   Card* getCardFromHand(int index);
-    /**
-     * @brief Adds a card to the hand.
-     * @param card The card to be added.
-     */
+  // add to handCards
   void addToHand(Card* card);
-    /**
-     * @brief Removes and deletes a card of a specific type from the hand.
-     * @param type The type of the card to be removed.
-     * @return Pointer to the removed card.
-     */
+  // remove & delete from handCards (once the card is used, it should be deleted)
   Card* removeCard(CardType);
 
-  friend std::ostream& operator<<(std::ostream& os, const Hand& h);
-
-   std::vector<Card *>* getHandCards() { return &handCards; }
+  std::vector<Card *>* getHandCards() { return &handCards; }
 };
 
-/**
- * @brief Represents a deck of cards used in the game.
- */
+
+
+
+
 class Deck
 {
 private:
-    std::vector<Card *> deckCards; ///< Vector of cards in the deck.
-    GameEngine* game; ///< Pointer to the game engine.
+  //deck pointer vector
+  std::vector<Card *> deckCards;
+  // Object Owner
+  GameEngine* game;
 
 public:
-    /**
-     * @brief Constructor with a game engine parameter.
-     * @param game Pointer to the game engine.
-     */
-    explicit Deck(GameEngine*);
-
-    /**
-     * @brief Destructor.
-     */
-    ~Deck();
-
-    /**
-     * @brief Draws a card from the deck and adds it to a player's hand.
-     * @param currentHand The hand to which the card will be added.
-     */
-    void draw(Hand& currentHand);
-
-    /**
-     * @brief Copy constructor.
-     * @param initial The deck to be copied.
-     */
-    Deck(const Deck &initial);
-
-    /**
-     * @brief Shuffles the cards in the deck.
-     */
-    void shuffleDeck();
-
-    /**
-     * @brief Retrieves the cards in the deck.
-     * @return Pointer to the vector of cards in the deck.
-     */
-    std::vector<Card *> * getDeckCards();
-
-    /**
-     * @brief Adds a card to the deck.
-     * @param card The card to be added.
-     */
-    void addCardToDeck(Card* card);
-
-    /*
-     * @brief Outputs the contents of the deck
-     * @param os reference to the OS
-     * @param d reference to the deck.
-     */
-    friend std::ostream& operator<<(std::ostream& os, const Deck& d);
-
+  explicit Deck(GameEngine*);
+  //destruct
+  ~Deck();
+  //random card drawer to players hand from remaining deck hand method
+  void draw(Hand& currentHand);
+  //deck copy constructor
+  Deck(const Deck &initial);
+  //deck of hand shuffler method
+  void shuffleDeck();
+  // get deck hand
+  std::vector<Card *> * getDeckCards();
+  // add card to deck
+  void addCardToDeck(Card* card);
+  void create_deck();
 private:
-    /**
-     * @brief Removes a card from the deck at a random index.
-     * @return Pointer to the removed card.
-     */
+  // removes card from deck at random
   Card* removeCardRandom();
 };
 

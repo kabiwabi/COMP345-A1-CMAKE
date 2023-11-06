@@ -1,71 +1,80 @@
+#include <iomanip> // To format output.
+#include <cstdlib>
 #include "Orders.h"
+#include "Map/Map.h"
+#include "Player/Player.h"
 
-/**
- * @brief Destructor for the Order class.
- */
-Order::~Order() = default;
-
-/**
- * @brief Overloaded insertion operator for the Order class.
- * @param stream The output stream.
- * @param o The Order object.
- * @return Modified output stream.
- */
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Orders
+//
+// -----------------------------------------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &stream, const Order &o) { return o.orderCout(stream); }
 
-/**
- * @brief Destructor for the OrdersList class.
- */
-OrdersList::~OrdersList(){ for(auto order: orders){ delete order; } }
+
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                OrdersList
+//
+// -----------------------------------------------------------------------------------------------------------------
 
 /**
- * @brief Copy constructor for OrdersList class.
- * @param oldList The OrdersList object to be copied.
+ * Destructor
  */
+OrdersList::~OrdersList(){
+  for(auto order: orders){ delete order; }
+  if(game){Subject::detach((ILogObserver* )game->getLogObserver());}
+}
+
+// Copy constructor to make deep copy of the order list
 OrdersList::OrdersList(const OrdersList &oldList)
-{
+ : Subject(oldList) {
   unsigned listLength = oldList.orders.size();
   orders = std::vector<Order *>(listLength);
+  game = oldList.game;
+  Subject::attach((ILogObserver*)game->getLogObserver());
   // cloning the same object into another memory slot
   for (unsigned o = 0; o < listLength; o++) { orders[o] = oldList.orders[o]->clone(); }
 }
 
-/**
- * @brief Adds an order to the OrdersList.
- * @param o Pointer to the order to be added.
- */
+// Method adding order to the order list vector
 void OrdersList::add(Order *o)
 {
   if(o){ orders.push_back(o); } else { throw std::runtime_error("Inserting a nullptr in OrderList."); }
+  Subject::notify(this);
 }
 
-/**
- * @brief Removes an order from the OrdersList.
- * @param pos The position of the order to be removed.
- */
+// method that removes an order
 void OrdersList::remove(int pos)
 {
   unsigned listLength = orders.size();
+  // as listLength is 0 the list is empty no need to remove an order
   if (listLength == 0){
     throw std::runtime_error("The order list is empty, can't remove any more orders.");
   }
+    // make sure order position is valid
   else if (pos >= listLength || pos < 0) {
     throw std::runtime_error("The inputed position isn't valid please make another entry.");
   }
   else
   {
+    // need to empty memory for dynamically created order objs
     delete orders[pos];
+    // when the memory is deleted need to remove the pointer from the list as well to avoid memory leak
     orders.erase(orders.begin() + pos);
   }
 }
 
-/**
- * @brief Moves an order within the OrdersList.
- * @param pos1 The starting position.
- * @param pos2 The ending position.
- */void OrdersList::move(int pos1, int pos2)
+// method moving the orders positions
+void OrdersList::move(int pos1, int pos2)
 {
+  // checks number of orders in order list to make sure the move is valid
   unsigned listLength = orders.size();
+  // checks if the order list is empty if so no need to move anything
   if (listLength == 0){
     std::cout << "Order list is empty, won't move anything." << std::endl;
   }
@@ -73,22 +82,21 @@ void OrdersList::remove(int pos)
   {
     throw std::runtime_error("There is only one order in the list, need more than one orders for the move.");
   }
+    // check to make sure user inputted positions are valid
   else if (pos1 >= listLength || pos2 >= listLength || pos1 < 0 || pos2 < 0)
   {
     throw std::runtime_error("None or only one inputted position is valid. Please try again.");
   }
   else
   {
+    // change the 2 pointers together without changing the address of objects that are being pointed to
     Order *temp = orders[pos1];
     orders[pos1] = orders[pos2];
     orders[pos2] = temp;
   }
 }
 
-
-/**
- * @brief Executes all the orders in the OrdersList.
- */
+// order executer method
 void OrdersList::execute()
 {
   unsigned listLength = orders.size();
@@ -105,13 +113,11 @@ void OrdersList::execute()
   }
 }
 
-/**
- * @brief Overloaded assignment operator for the OrdersList class.
- * @param copyList The OrdersList object to be copied.
- * @return Reference to the modified OrdersList object.
- */
+// OrdersList class assignment operator
 OrdersList &OrdersList::operator=(const OrdersList &copyList)
 {
+  // let go of left hand side memory and deep copy to right hand side
+  // checks if we're self assigning
   if (&copyList == this){
     return *this;
   }
@@ -121,7 +127,9 @@ OrdersList &OrdersList::operator=(const OrdersList &copyList)
 
   for (int o = 0; o < initialListLength; o++) { delete orders[o]; }
 
+  // Grab memory same size as the right hand side vector
   orders = std::vector<Order *>(copyListLength);
+
 
   for (int i = 0; i < copyListLength; i++) {
     // clone copied element to left hand side
@@ -131,12 +139,20 @@ OrdersList &OrdersList::operator=(const OrdersList &copyList)
   return *this;
 }
 
-/**
- * @brief Overloaded insertion operator for the OrdersList class.
- * @param stream The output stream.
- * @param ol The OrdersList object.
- * @return Modified output stream.
- */
+size_t OrdersList::getOrdersListSize()
+{
+    return orders.size();
+}
+Order* OrdersList::getOrder(int index)
+{
+    if(index < orders.size() && index >= 0)
+    {
+        return orders[index];
+    }
+    return nullptr;
+}
+
+// print out the order list
 std::ostream &operator<<(std::ostream &stream, const OrdersList &ol)
 {
   unsigned listLength = ol.orders.size();
@@ -149,330 +165,525 @@ std::ostream &operator<<(std::ostream &stream, const OrdersList &ol)
   return stream;
 }
 
-/**
- * @brief Get a list of orders.
- * @return A pointer to the vector containing the orders.
- */
 std::vector<Order *> *OrdersList::getList() {
   return &this->orders;
 }
 
-// -------------- ADVANCE --------------
 
-/**
- * @brief Overloaded output operator for Advance order.
- * @param output Output stream.
- * @return Updated output stream.
- */
+std::string OrdersList::castOrderType(Order * o){
+  if(auto advance = dynamic_cast<Advance*>(o)){
+      return advance->getLabel();
+  }
+  else if(auto airlift = dynamic_cast<Airlift*>(o)){
+      return airlift->getLabel();
+  }
+  else if(auto blockade = dynamic_cast<Blockade*>(o)){
+      return blockade->getLabel();
+  }
+  else if(auto bomb = dynamic_cast<Bomb*>(o)){
+      return bomb->getLabel();
+  }
+  else if(auto deploy = dynamic_cast<Deploy*>(o)){
+      return deploy->getLabel();
+  }
+  else if(auto negotiate = dynamic_cast<Negotiate*>(o)){
+      return negotiate->getLabel();
+  }
+  throw std::runtime_error("OrderList::Error Order is null");
+}
+
+std::string OrdersList::stringToLog() {
+  Order &o = *orders.back();
+  std::string orderType = castOrderType(&o);
+
+  std::stringstream ss;
+  ss << "ORDER LIST: ";
+  ss << "Order List Added ";
+  ss << orderType;
+  return ss.str();
+}
+OrdersList::OrdersList(GameEngine *gameEngine) : game(gameEngine) {
+  Subject::attach((ILogObserver*)game->getLogObserver());
+}
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Advance
+//
+// -----------------------------------------------------------------------------------------------------------------
+Advance::Advance(GameEngine* game, Territory* source, Territory* target, Player* currentPlayer, int amount) : source(source), target(target), currentPlayer(currentPlayer), amount(amount), game(game){
+  Subject::attach((ILogObserver*)game->getLogObserver());
+}
+
 std::ostream &Advance::orderCout(std::ostream &output) const { return output << "-> Advance order."; }
 
-/**
- * @brief Retrieves the label for the Advance order.
- * @return Label string.
- */
 std::string Advance::getLabel() const { return label; }
 
-/**
- * @brief Destructor for Advance order.
- */
-Advance::~Advance() = default;
-
-/// Label for the Advance order.
 const std::string Advance::label = "Advance";
 
-/**
- * @brief Validates the Advance order.
- * @return Boolean indicating the validity of the order.
- */
 bool Advance::validate() const
 {
   std::cout << "-> Advance order validation check" << std::endl;
+
+    if (source->getPlayer() != currentPlayer)
+    {
+        cout << "The source territory is not your own!\n" << endl;
+        return false;
+    }
+
+    else if (!(std::find(source->getAdjacentTerritories()->begin(), source->getAdjacentTerritories()->end(), target) != source->getAdjacentTerritories()->end()))
+    {
+        cout << "The target territory is not adjacent to the source territory!\n" << endl;
+        return false;
+    }
+    else if (amount > source->getArmies())
+    {
+        cout << "You do not have this many armies in this territory!\n" << endl;
+        return false;
+    }
+    else if (amount < 1)
+    {
+        cout << "Please enter a value that is at least 1 for this order\n" << endl;
+    }
+    cout << "Your order has been validated!\n" << endl;
   return true;
 }
 
-/**
- * @brief Executes the Advance order.
- */
-void Advance::execute() const
+void Advance::execute()
 {
-  if (validate()) { std::cout << "Advance execution." << std::endl; }
+    if (validate())
+    {
+        std::cout << "Advance execution." << std::endl;
+        if (source->getPlayer() == target->getPlayer()) // Transferring army to another territory
+        {
+            source->setArmies(source->getArmies() - amount);
+            target->setArmies(target->getArmies() + amount);
+        }
+        else // If you try to transfer on enemy territory, considered as attack.
+        {
+            if (!currentPlayer->canAttack(target->getPlayer()))
+            {
+                cout << "You cannot attack this player!\n" << endl;
+                return;
+            }
+            attackSimulation(source, target, currentPlayer, amount);
+        }
+        cout << "Advance has finished executing!\n" << endl;
+        Subject::notify(this);
+    }
 }
 
-/**
- * @brief Clones the Advance order.
- * @return Pointer to the cloned order.
- */
 Order *Advance::clone() const { return new Advance(*this); }
 
-// -------------- AIRLIFT --------------
+std::string Advance::stringToLog() {
+  std::stringstream ss;
+  ss << "ORDER: ";
+  ss << "Order Executed ";
+  ss << *this;
+  return ss.str();
+}
 
-/// Label for the Airlift order.
+void Advance::attackSimulation(Territory* pSource, Territory* pTarget, Player* pCurrentPlayer, int army) {
+  pSource->setArmies(pSource->getArmies() - army); // Attackers leave home territory
+
+  int successAttack = 0;
+  int successDefend = 0;
+
+  for (int i = 1; i <= army; i++) // Attacking Phase
+  {
+
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> range(0, 100);
+
+    int roll = (int)range(rng) % 100 + 1;
+    if (roll <= 60)
+    {
+      successAttack++;
+    }
+  }
+
+  for (int i = 1; i <= pTarget->getArmies(); i++) // Defending Phase
+  {
+
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> range(0, 100);
+
+    int roll = (int)range(rng) % 100 + 1;
+
+    if (roll <= 70)
+    {
+      successDefend++;
+    }
+  }
+
+  int remainingAttackArmies = max(army - successDefend, 0);
+  int remainingDefendArmies = max(pTarget->getArmies() - successAttack, 0);
+
+  if (remainingAttackArmies > 0 && remainingDefendArmies == 0) // Win
+  {
+    cout << "Territory conquered! " << pCurrentPlayer->getName() << " has won this battle for " << pTarget->getName() << "!" << endl;
+    if(pTarget->getPlayer() != nullptr){
+      pTarget->getPlayer()->removeTerritory(*pTarget);
+    }
+    pCurrentPlayer->addTerritory(*pTarget);// territory added to player list
+    pTarget->setArmies(remainingAttackArmies); // Attackers advance to conquered territory
+
+    // give player army card from deck (if there is one)
+    if(!pCurrentPlayer->getGameInstance()->getDeck()->getDeckCards()->empty()){
+      cout << pCurrentPlayer->getName() <<" has won a card" << endl;
+      pCurrentPlayer->getGameInstance()->getDeck()->draw(*pCurrentPlayer->getHand());
+    }
+  }
+  else // Lose. A draw is considered army loss. If any, attackers retreat. If any, defenders retreat.
+  {
+    cout << "Territory " << pTarget->getName() << " has not been conquered. " << pCurrentPlayer->getName() << " has lost this battle!" << endl;
+    pSource->setArmies(pSource->getArmies() + remainingAttackArmies); // Attackers retreat
+    pTarget->setArmies(remainingDefendArmies);
+  }
+
+  if (pSource->getArmies() == 0)
+  {
+    cout << pCurrentPlayer->getName()  << " has lost their territory: " + pSource->getName() + " in the process!" << endl;
+    if(pSource->getPlayer() != nullptr){
+      pSource->getPlayer()->removeTerritory(*pSource);
+    }
+    pSource->setPlayer(nullptr);
+  }
+
+  if (pTarget->getArmies() == 0)
+  {
+    if(pTarget->getPlayer() != nullptr){
+      cout << pTarget->getPlayer()->getName() << " has lost their territory " + pTarget->getName() + " in the process!\n" << endl;
+      pTarget->getPlayer()->removeTerritory(*pTarget);
+    }
+    pTarget->setPlayer(nullptr);
+  }
+}
+Advance::~Advance() {
+  if(game){ Subject::detach((ILogObserver* )game->getLogObserver()); }
+}
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Airlift
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+Airlift::Airlift(GameEngine* game, Territory* source, Territory* target, Player* currentPlayer, int amount) : source(source), target(target), currentPlayer(currentPlayer), amount(amount), game(game){
+  Subject::attach((ILogObserver*)game->getLogObserver());
+}
+
 const std::string Airlift::label = "Airlift";
 
-/**
- * @brief Destructor for Airlift order.
- */
-Airlift::~Airlift() = default;
-
-/**
- * @brief Retrieves the label for the Airlift order.
- * @return Label string.
- */
 std::string Airlift::getLabel() const { return label; }
 
-/**
- * @brief Overloaded output operator for Airlift order.
- * @param output Output stream.
- * @return Updated output stream.
- */
 std::ostream &Airlift::orderCout(std::ostream &output) const { return output << "-> Airlift order."; }
 
-/**
- * @brief Validates the Airlift order.
- * @return Boolean indicating the validity of the order.
- */
 bool Airlift::validate() const
 {
   std::cout << "-> Airlift order validation check" << std::endl;
+    if (source->getPlayer() != currentPlayer && target->getPlayer() != currentPlayer)
+    {
+        cout << "The territory is not your own!\n" << endl;
+        return false;
+    }
+    else if (amount > source->getArmies())
+    {
+        cout << "You do not have this many armies in this territory!\n" << endl;
+    }
+    else if (amount < 1)
+    {
+        cout << "Please enter a value that is at least 1 for this order\n" << endl;
+    }
+    cout << "Your order has been validated!\n" << endl;
   return true;
 }
 
-/**
- * @brief Executes the Airlift order.
- */
-void Airlift::execute() const
+void Airlift::execute()
 {
-  if (validate()) { std::cout << "Airlift execution." << std::endl; }
+  if (validate()) {
+      std::cout << "Airlift execution." << std::endl;
+      if (source->getPlayer() == target->getPlayer()) // Transferring army to another territory
+      {
+          source->setArmies(source->getArmies() - amount);
+          target->setArmies(target->getArmies() + amount);
+      }
+      if(source->getArmies() == 0){
+        if(source->getPlayer()){
+          source->getPlayer()->removeTerritory(*source);
+        }
+        source->setPlayer(nullptr);
+      }
+      Subject::notify(this);
+  }
 }
 
-/**
- * @brief Clones the Airlift order.
- * @return Pointer to the cloned order.
- */
 Order *Airlift::clone() const { return new Airlift(*this); }
 
-// -------------- BLOCKADE --------------
+std::string Airlift::stringToLog() {
+  std::stringstream ss;
+  ss << "ORDER: ";
+  ss << "Order Executed ";
+  ss << *this;
+  return ss.str();
+}
+Airlift::~Airlift() {
+  if(game){ Subject::detach((ILogObserver* )game->getLogObserver()); }
+}
 
-/// Label for the Blockade order.
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Blockade
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+Blockade::Blockade(GameEngine* game, Territory* target, Player* currentPlayer) : target(target), currentPlayer(currentPlayer), game(game){
+  Subject::attach((ILogObserver*)game->getLogObserver());
+}
+
 const std::string Blockade::label = "Blockade";
 
-/**
- * @brief Destructor for Blockade order.
- */
-Blockade::~Blockade() = default;
-
-/**
- * @brief Retrieves the label for the Blockade order.
- * @return Label string.
- */
 std::string Blockade::getLabel() const { return label; }
 
-/**
- * @brief Overloaded output operator for Blockade order.
- * @param output Output stream.
- * @return Updated output stream.
- */
 std::ostream &Blockade::orderCout(std::ostream &output) const { return output << "-> Blockade order."; }
 
-/**
- * @brief Validates the Blockade order.
- * @return Boolean indicating the validity of the order.
- */
 bool Blockade::validate() const
 {
-    std::cout << "-> Blockade order validation check" << std::endl;
-    return true;
+  std::cout << "-> Blockade order validation check" << std::endl;
+    if(target->getPlayer() != currentPlayer)
+    {
+        cout << "This is not your territory! This order can only be played on your own territory!\n" << endl;
+        return false;
+    }
+    cout << "Your order has been validated!\n" << endl;
+  return true;
 }
 
-/**
- * @brief Executes the Blockade order.
- */
-void Blockade::execute() const
+void Blockade::execute()
 {
-    if (validate()) { std::cout << "Blockade execution." << std::endl; }
+  if (validate()) {
+      std::cout << "Blockade execution." << std::endl;
+      target->setArmies(target->getArmies() * 3);
+      if(target->getPlayer()){
+        target->getPlayer()->removeTerritory(*target);
+      }
+      target->setPlayer(nullptr); // Transfer to neutral
+      cout << "Blockade has finished executing!\n" << endl;
+      Subject::notify(this);
+  }
 }
 
-/**
- * @brief Clones the Blockade order.
- * @return Pointer to the cloned order.
- */
 Order *Blockade::clone() const { return new Blockade(*this); }
 
-// -------------- BOMB --------------
+std::string Blockade::stringToLog() {
+  std::stringstream ss;
+  ss << "ORDER: ";
+  ss << "Order Executed ";
+  ss << *this;
+  return ss.str();
+}
+Blockade::~Blockade() {
+  if(game){Subject::detach((ILogObserver* )game->getLogObserver());}
+}
 
-/// Label for the Bomb order.
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Bomb
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+Bomb::Bomb(GameEngine* game, Territory* target, Player* currentPlayer) : target(target), currentPlayer(currentPlayer), game(game){
+  Subject::attach((ILogObserver*)game->getLogObserver());
+}
+
 const std::string Bomb::label = "Bomb";
 
-/**
- * @brief Destructor for Bomb order.
- */
-Bomb::~Bomb() = default;
-
-/**
- * @brief Retrieves the label for the Bomb order.
- * @return Label string.
- */
 std::string Bomb::getLabel() const { return label; }
 
-/**
- * @brief Overloaded output operator for Bomb order.
- * @param output Output stream.
- * @return Updated output stream.
- */
 std::ostream &Bomb::orderCout(std::ostream &output) const { return output << "-> Bomb order."; }
 
-/**
- * @brief Validates the Bomb order.
- * @return Boolean indicating the validity of the order.
- */
 bool Bomb::validate() const
 {
-    std::cout << "-> Bomb order validation check" << std::endl;
-    return true;
+  std::cout << "-> Bomb order validation check" << std::endl;
+    if(target->getPlayer() == currentPlayer)
+    {
+        cout << "This territory is your own!\n" << endl;
+        return false;
+    }
+    cout << "Your order has been validated!\n" << endl;
+  return true;
 }
 
-/**
- * @brief Executes the Bomb order.
- */
-void Bomb::execute() const
+void Bomb::execute()
 {
-    if (validate()) { std::cout << "Bomb execution." << std::endl; }
+
+  if (validate()) {
+      if (!currentPlayer->canAttack(target->getPlayer()))
+      {
+          cout << "You cannot attack this player!\n" << endl;
+          return;
+      }
+      std::cout << "Bomb execution." << std::endl;
+      target->setArmies((target->getArmies() / 2) + 1);
+      // if target army is cleared. Remove player from ownership
+      if(target->getArmies() == 0){
+        if(target->getPlayer()){
+          target->getPlayer()->removeTerritory(*target);
+        }
+        target->setPlayer(nullptr);
+      }
+      cout << "Bomb has finished executing!\n" << endl;
+      Subject::notify(this);
+  }
 }
 
-/**
- * @brief Clones the Bomb order.
- * @return Pointer to the cloned order.
- */
 Order *Bomb::clone() const { return new Bomb(*this); }
 
-// -------------- DEPLOY --------------
+std::string Bomb::stringToLog() {
+  std::stringstream ss;
+  ss << "ORDER: ";
+  ss << "Order Executed ";
+  ss << *this;
+  return ss.str();
+}
+Bomb::~Bomb() {
+  if(game){
+    Subject::detach((ILogObserver* )game->getLogObserver());
+  }
+}
 
-/// Label for the Deploy order.
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Deploy
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+Deploy::Deploy(GameEngine* game, Territory* target, Player* currentPlayer, int amount) : target(target), currentPlayer(currentPlayer), amount(amount), game(game){
+  Subject::attach((ILogObserver*)game->getLogObserver());
+}
+
 const std::string Deploy::label = "Deploy";
 
-/**
- * @brief Destructor for Deploy order.
- */
-Deploy::~Deploy() = default;
-
-/**
- * @brief Retrieves the label for the Deploy order.
- * @return Label string.
- */
 std::string Deploy::getLabel() const { return label; }
 
-/**
- * @brief Overloaded output operator for Deploy order.
- * @param output Output stream.
- * @return Updated output stream with order description.
- */
 std::ostream &Deploy::orderCout(std::ostream &output) const { return output << "-> Deploy order."; }
 
-/**
- * @brief Validates the Deploy order.
- * @return Boolean indicating the validity of the order.
- */
 bool Deploy::validate() const
 {
-    std::cout << "-> Deploy order validation check" << std::endl;
-    return true;
+  std::cout << "-> Deploy order validation check" << std::endl;
+
+    if (target->getPlayer() != currentPlayer)
+    {
+        cout << "You do not own this territory!\n" << endl;
+        return false;
+    }
+    else if (amount > currentPlayer->getReinforcementPool())
+    {
+        cout << "You do not have this many armies in the reinforcement pool!\n" << endl;
+        return false;
+    }
+    else if (amount < 1)
+    {
+        cout << "Please enter a value that is at least 1 for this order\n" << endl;
+        return false;
+    }
+    cout << "Your order has been validated!\n" << endl;
+  return true;
 }
 
-/**
- * @brief Executes the Deploy order.
- */
-void Deploy::execute() const
+void Deploy::execute()
 {
-    if (validate()) { std::cout << "Deploy execution." << std::endl; }
+  if (validate()) {
+      std::cout << "Deploy execution." << std::endl;
+      target->setArmies(amount + target->getArmies());
+      currentPlayer->removeArmies(amount);
+      cout << "Deploy has finished executing!\n" << endl;
+      Subject::notify(this);
+  }
 }
 
-/**
- * @brief Clones the Deploy order.
- * @return Pointer to the cloned order.
- */
 Order *Deploy::clone() const { return new Deploy(*this); }
 
-// -------------- NEGOTIATE --------------
+std::string Deploy::stringToLog() {
+  std::stringstream ss;
+  ss << "ORDER: ";
+  ss << "Order Executed ";
+  ss << *this;
+  return ss.str();
+}
+Deploy::~Deploy() {
+  if(game){ Subject::detach((ILogObserver* )game->getLogObserver()); }
+}
 
-/// Label for the Negotiate order.
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Negotiate
+//
+// -----------------------------------------------------------------------------------------------------------------
+
+
+Negotiate::Negotiate(GameEngine* game, Player* targetPlayer, Player* currentPlayer) : targetPlayer(targetPlayer), currentPlayer(currentPlayer), game(game){
+  Subject::attach((ILogObserver*)game->getLogObserver());
+}
+
 const std::string Negotiate::label = "Negotiate";
 
-/**
- * @brief Destructor for Negotiate order.
- */
-Negotiate::~Negotiate() = default;
-
-/**
- * @brief Retrieves the label for the Negotiate order.
- * @return Label string.
- */
 std::string Negotiate::getLabel() const { return label; }
 
-/**
- * @brief Validates the Negotiate order.
- * @return Boolean indicating the validity of the order.
- */
 bool Negotiate::validate() const
 {
-    std::cout << "-> Negotiate order validation check" << std::endl;
-    return true;
+  std::cout << "-> Negotiate order validation check" << std::endl;
+    if(targetPlayer == currentPlayer)
+    {
+        cout << "You cannot negotiate with yourself.\n" << endl;
+        return false;
+    }
+    cout << "Your order has been validated.\n" << endl;
+  return true;
 }
 
-/**
- * @brief Executes the Negotiate order.
- */
-void Negotiate::execute() const
+void Negotiate::execute()
 {
-    if (validate()) { std::cout << "Negotiate execution." << std::endl; }
+  if (validate()) {
+      std::cout << "Negotiate execution." << std::endl;
+      currentPlayer->addFriendly(targetPlayer);
+      targetPlayer->addFriendly(currentPlayer);
+  }
+    cout << "Negotiate has finished executing." << endl;
+    Subject::notify(this);
 }
 
-/**
- * @brief Clones the Negotiate order.
- * @return Pointer to the cloned order.
- */
+
 Order *Negotiate::clone() const { return new Negotiate(*this); }
 
-/**
- * @brief Overloaded output operator for Negotiate order.
- * @param ostream Output stream.
- * @return Updated output stream with order description.
- */
 std::ostream &Negotiate::orderCout(std::ostream &ostream) const {
-    return ostream << "-> Negotiate order.";
+  return ostream << "-> Negotiate order.";
 }
 
-// -------------- UserInputOrder --------------
-
-/**
- * @brief Creates an Order object based on the provided order type.
- * @param orderType The type of order to be created.
- * @return Pointer to the created order.
- */
-Order* UserInputOrder::create(const std::string& orderType)
-{
-  if (orderType == "Deploy") { return new Deploy; }
-  else if (orderType == "Advance") { return new Advance; }
-  else if (orderType == "Bomb") { return new Bomb(); }
-  else if (orderType == "Blockade") { return new Blockade(); }
-  else if (orderType == "Airlift") { return new Airlift(); }
-  else if (orderType == "Negotiate") { return new Negotiate(); }
-  else { throw std::runtime_error("Unexpected OrderType: " + orderType ); }
+std::string Negotiate::stringToLog() {
+  std::stringstream ss;
+  ss << "ORDER: ";
+  ss << "Order Executed ";
+  ss << *this;
+  return ss.str();
 }
-
-// TODO: Remove deploy and add new logic for A#2
-Order* OrdersFactory::CreateOrder(CardType cardType) {
-  switch(cardType){
-    case CT_Bomb:
-      return new Bomb();
-    case CT_Reinforcement:
-      return new Deploy();
-    case CT_Blockade:
-      return new Blockade();
-    case CT_Airlift:
-      return new Airlift();
-    case CT_Diplomacy:
-      return new Negotiate();
-    default:
-      throw std::runtime_error("Invalid card type");
-  }
+Negotiate::~Negotiate() {
+  if(game){ Subject::detach((ILogObserver* )game->getLogObserver()); }
 }

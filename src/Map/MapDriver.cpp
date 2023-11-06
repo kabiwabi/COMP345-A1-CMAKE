@@ -3,29 +3,24 @@
 
 #include "Map/Map.h"
 
-/**
- * @brief Tests the loading of various map files and validates them.
- *
- * Loads a set of predefined map files, both valid and invalid.
- * For each map file, it checks the validity and reports the results.
- * If a map file is in an invalid format or has errors, it catches the error and displays a message.
- */
 void testLoadMaps() {
 
+  // available map files
   std::vector<std::string> map_files {
-    "map_resources/Africa.map",
-    "map_resources/Alberta.map",
-    "map_resources/AlbertaInvalid.map",
-    "map_resources/Anatomy.map",
-    "map_resources/TestMap1_valid.map",
-    "map_resources/TestMap2_invalid.map",
-    "map_resources/TestMap3_invalid.map",
-    "map_resources/TestMap4_valid.map",
-    "map_resources/TestMap5_invalid_format.map",
+    "res/TestMap1_valid.map",
+    "res/TestMap2_invalid.map",
+    "res/TestMap3_invalid.map",
+    "res/TestMap4_valid.map",
+    "res/TestMap5_invalid_format.map"
   };
+  // mocking argc and argv
+  int argc = 1;
+  char* argv[] = {(char*)"-console"};
+  // let's load all the maps and check to see if they are valid.
   for(const std::string& p : map_files){
-    GameEngine gameEngine = GameEngine();
+    GameEngine gameEngine = GameEngine(argc, argv);
     auto map = gameEngine.getMap();
+    // we make sure to catch our own std::runtime errors for invalid maps
     try {
       MapLoader::load(p, map);
       std::cout << "Map is valid: " << (map->validate() ? "True" : "False") << std::endl;

@@ -6,90 +6,97 @@
 #include "Map/Map.h"
 
 #include <vector>
+#include <utility>
+#include <algorithm>
 
 class Territory;
 enum CardType : int;
 class GameEngine;
 class Hand;
 class OrdersList;
+class Order;
+class Airlift;
+class Bomb;
+class Blockade;
+class Negotiate;
 
-/**
- * @class Player
- * @brief Represents a player in the game.
- *
- * This class holds the player's properties and provides the necessary functions
- * to manage and interact with these properties during the game.
- */
 class Player {
 private:
-    /// Static variable for tracking the next player ID.
-    static int nextId;
+  std::string phase;
+  int reinforcementPool;
+  std::vector<Territory*> territories;
+  Hand* hand;
+  OrdersList* orders;
+  GameEngine* game;
+  std::string name;
+  std::vector<Player*> friendlyPlayers;
 
-    /// The unique ID for the player.
-    int id;
 
-    /// The name of teh player
-    std::string name;
-
-    /// The territories that this player owns.
-    std::vector<Territory*> territories;
-
-    /// The player's hand of cards.
-    Hand* hand;
-
-    /// The orders that this player has issued.
-    OrdersList* orders;
-
-    /// The game engine that this player is a part of.
-    GameEngine* game;
-
-    /// The reinforcement pool of the player
-    int reinforcementPool;
+  int deployedArmiesThisTurn = 0;
 
 public:
-    /**
-     * @name Constructors and Destructors
-     * @{
-     */
-    Player(GameEngine* game, Hand* cards, const std::string& name);
-    ~Player();
-    Player(const Player &p);
-    /** @} */
+  // --------------------------------
+  // Constructors
+  // --------------------------------
+  Player(GameEngine* game, Hand* cards, std::string name);
+  ~Player();
+  Player(const Player &p) = default;
 
-    /**
-     * @name Operator Overloads
-     * @{
-     */
-    Player& operator=(const Player &other);
-    /** @} */
+  // --------------------------------
+  // Operator Overloads
+  // --------------------------------
+  Player& operator=(const Player &other);
 
-    /**
-     * @name Player Actions
-     * @{
-     */
-    std::vector<Territory *> toDefend();
-    std::vector<Territory *> toAttack();
+  // --------------------------------
+  // Actions
+  // --------------------------------
+  std::vector<Territory *> toDefend();
+  std::vector<Territory *> toAttack();
 
-    void issueOrder(CardType cardType);
-    void addTerritory(Territory& territory);
-    void removeTerritory(Territory& territory);
-    void removefromReinforcementPool(int armiesToAdd);
-    void addToReinforcementPool(int armiesToAdd);
-    /** @} */
+  void removeArmies(int n);
 
-    /**
-     * @name Getters
-     * @{
-     */
-    Hand* getHand();
-    OrdersList* getOrdersListObject();
-    std::vector<Territory*>* getTerritories();
-    int getId() const;
-    int getReinforcementPool();
-    std::string getName() const;
-    /** @} */
+  void issueOrder();
+  void addTerritory(Territory& territory);
+  void removeTerritory(Territory& territory);
+  void addReinforcement(int reinforcement);
+  int getContinentBonus();
+  Territory* findFirstNeighbourTerritory(Territory* target);
+  std::vector<Player*> getEnemies();
+
+  // --------------------------------
+  // Strategies
+  // --------------------------------
+  Order* decideOrder(CardType);
+  Airlift* decideCardOrderAirlift();
+  Bomb* decideCardOrderBomb();
+  Blockade* decideCardOrderBlockade();
+  Negotiate* decideCardOrderNegotiate();
+  void decideCardReinforcement();
+
+  // --------------------------------
+  // Setters
+  // --------------------------------
+  void setReinforcementPool(int n);
+  void addFriendly(Player *pPlayer);
+  void clearFriendly();
+  void setPhase(std::string ph);
+  void addDeployedArmies(int a);
+  void clearDeploymentArmies();
+
+  // --------------------------------
+  // Getters
+  // --------------------------------
+  Hand* getHand();
+  OrdersList* getOrdersListObject();
+  std::vector<Territory*>* getTerritories();
+  std::string getPhase();
+  int getReinforcementPool() const;
+  std::string getName() const;
+  int getDeployedArmiesThisTurn() const;
+  GameEngine* getGameInstance();
+
 
 public:
-    /// Friend function to print the player details.
-    friend std::ostream& operator <<(std::ostream &out, const Player &player);
+  friend std::ostream& operator <<(std::ostream &out, const Player &player);
+  bool canAttack(Player *pPlayer);
 };

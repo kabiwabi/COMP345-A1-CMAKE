@@ -1,0 +1,13 @@
+loadmap error
+loadmap TestMap1_valid.map
+loadmap error
+loadmap TestMap2_valid.map
+validatemap
+validatemap
+addplayer zafir
+addplayer kris
+addplayer raisa
+addplayer valentina
+addplayer alexia
+addplayer kim
+gamestart
