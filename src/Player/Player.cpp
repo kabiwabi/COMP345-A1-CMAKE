@@ -1,5 +1,12 @@
 #include "Player.h"
 
+/**
+ * @brief Constructor for Player class.
+ * @param game Pointer to GameEngine object.
+ * @param cards Pointer to Hand object representing the player's cards.
+ * @param name String representing the player's name.
+ */
+
 Player::Player(GameEngine* game, Hand* cards, std::string  name)
   : game(game), hand(cards), name(std::move(name)), reinforcementPool(0)
 {
@@ -7,6 +14,10 @@ Player::Player(GameEngine* game, Hand* cards, std::string  name)
   game->addPlayer(this);
 }
 
+/**
+ * @brief Determines territories to defend.
+ * @return Vector of Territory pointers that the player should defend.
+ */
 std::vector<Territory *> Player::toDefend() {
   vector<tuple<Territory*, int>> listOfTerritories;
   // check all neighbours for enemies
@@ -37,6 +48,11 @@ std::vector<Territory *> Player::toDefend() {
   return response;
 }
 
+
+/**
+ * @brief Determines territories to attack.
+ * @return Vector of Territory pointers that the player should attack.
+ */
 std::vector<Territory *> Player::toAttack() {
   vector<Territory*> listOfTerritories;
   // check all neighbours for enemies
@@ -61,7 +77,9 @@ std::vector<Territory *> Player::toAttack() {
   return listOfTerritories;
 }
 
-// Type of order
+/**
+ * @brief Issues an order based on current game state.
+ */
 void Player::issueOrder() {
 
   std::random_device dev3;
@@ -151,14 +169,21 @@ void Player::issueOrder() {
 
   }
 }
-
+/**
+ * @brief Adds a territory to the player's control.
+ * @param territory Reference to the Territory to be added.
+ */
 void Player::addTerritory(Territory& territory) {
   if(territory.getPlayer() == this){ return; }
   if(territory.getPlayer()){ territory.getPlayer()->removeTerritory(territory); }
   territory.setPlayer(this);
   territories.push_back(&territory);
 }
-
+/**
+ * @brief Removes a territory from the player's control.
+ * @param territory Reference to the Territory to be removed.
+ * @throws runtime_error if the territory isn't found in the player's list.
+ */  
 void Player::removeTerritory(Territory& territory) {
   territory.setPlayer(nullptr);
   auto end = territories.end();
@@ -170,12 +195,18 @@ void Player::removeTerritory(Territory& territory) {
   }
   throw std::runtime_error("Territory wasn't in the player's list.");
 }
-
+/**
+ * @brief Destructor for Player class.
+ */
 Player::~Player() {
   delete hand;
   delete orders;
 };
-
+/**
+ * @brief Assignment operator overload for Player class.
+ * @param other Constant reference to another Player object.
+ * @return Reference to the current Player object.
+ */
 Player &Player::operator=(const Player &other) {
   if(this == &other){
     return *this;
@@ -186,7 +217,12 @@ Player &Player::operator=(const Player &other) {
   this->territories = other.territories;
   return *this;
 }
-
+/**
+ * @brief Output stream operator overload for Player class.
+ * @param out Reference to an ostream object.
+ * @param player Constant reference to a Player object.
+ * @return Reference to the ostream object.
+ */
 std::ostream &operator<<(std::ostream &out, const Player &player) {
   out << "-------------------" << "\n";
   for(auto t : player.territories){
@@ -200,39 +236,63 @@ std::ostream &operator<<(std::ostream &out, const Player &player) {
 // ----------------------------------------------------------------
 // Getters
 // ----------------------------------------------------------------
-
+/**
+ * @brief Gets the territories owned by the player.
+ * @return Pointer to a vector of Territory pointers.
+ */
 std::vector<Territory *>* Player::getTerritories() {
   return &territories;
 }
-
+/**
+ * @brief Gets the player's hand of cards.
+ * @return Pointer to a Hand object.
+ */
 Hand *Player::getHand() {
   return hand;
 }
-
+/**
+ * @brief Gets the player's orders list.
+ * @return Pointer to an OrdersList object.
+ */
 OrdersList* Player::getOrdersListObject() {
   return orders;
 }
-
+/**
+ * @brief Gets the current phase of the player.
+ * @return String representing the current phase.
+ */
 string Player::getPhase()
 {
     return phase;
 }
-
+/**
+ * @brief Sets the current phase of the player.
+ * @param ph String representing the phase to be set.
+ */
 void Player::setPhase(string ph)
 {
     phase = std::move(ph);
 }
-
+/**
+ * @brief Gets the number of reinforcement troops available to the player.
+ * @return Integer representing the number of reinforcements.
+ */
 int Player::getReinforcementPool() const
 {
     return reinforcementPool;
 }
-
+/**
+ * @brief Sets the number of reinforcement troops available to the player.
+ * @param i Integer representing the number of reinforcements to be set.
+ */
 void Player::setReinforcementPool(int i)
 {
     reinforcementPool = i;
 }
-
+/**
+ * @brief Calculates the bonus reinforcements received from controlling entire continents.
+ * @return Integer representing the total continent bonus.
+ */
 int Player::getContinentBonus()
 {
   int continentBonusTotal = 0;
@@ -256,20 +316,38 @@ int Player::getContinentBonus()
   }
     return continentBonusTotal;
 }
-
+/**
+ * @brief Gets the name of the player.
+ * @return String representing the player's name.
+ */
 std::string Player::getName() const {
   return name;
 }
-
+/**
+ * @brief Adds reinforcements to the player's reinforcement pool.
+ * @param reinforcement Integer representing the number of reinforcements to add.
+ */
 void Player::addReinforcement(int reinforcement) {
   reinforcementPool += reinforcement;
 }
+ /**
+ * @brief Adds a player to the list of friendly players.
+ * @param pPlayer Pointer to the Player object to be added.
+ */
 void Player::addFriendly(Player* pPlayer) {
   friendlyPlayers.push_back(pPlayer);
 }
+/**
+ * @brief Clears the list of friendly players.
+ */
 void Player::clearFriendly() {
   friendlyPlayers.erase(friendlyPlayers.begin(), friendlyPlayers.end());
 }
+/**
+ * @brief Determines if the player can attack another player.
+ * @param pPlayer Pointer to the target Player object.
+ * @return Boolean indicating whether an attack is possible.
+ */
 bool Player::canAttack(Player *pPlayer) {
   if(pPlayer == this){return false;}
   for(auto& player : friendlyPlayers){
@@ -279,6 +357,11 @@ bool Player::canAttack(Player *pPlayer) {
   }
   return true;
 }
+/**
+ * @brief Finds the first neighboring territory owned by the player.
+ * @param target Pointer to the target Territory object.
+ * @return Pointer to the first neighboring Territory, or nullptr if none found.
+ */
 Territory* Player::findFirstNeighbourTerritory(Territory* target) {
   for(auto& t: *target->getAdjacentTerritories()){
     if(t->getPlayer() == this){
@@ -287,6 +370,14 @@ Territory* Player::findFirstNeighbourTerritory(Territory* target) {
   }
   return nullptr;
 }
+/**
+ * @brief Decides on an order based on the given card type.
+ * @param cardType Enum value representing the type of card.
+ * @return Pointer to an Order object, or nullptr if no decision is made.
+ * @throws runtime_error if the card type is invalid.
+ */
+
+
 Order* Player::decideOrder(CardType cardType) {
   switch (cardType) {
     case CT_Bomb:
@@ -304,6 +395,10 @@ Order* Player::decideOrder(CardType cardType) {
   throw std::runtime_error("Player::decideOrder::Assert CardType invalid");
 }
 
+/**
+ * @brief Decides on an Airlift order based on the current game state.
+ * @return Pointer to an Airlift object, or nullptr if no valid decision is made.
+ */
 Airlift* Player::decideCardOrderAirlift() {
   if(territories.size() < 2){
     // we can't really decide because there's not enough territories
@@ -346,6 +441,10 @@ Airlift* Player::decideCardOrderAirlift() {
   return new Airlift(game, source, target, this, (source->getArmies() / 2) + 1);
 }
 
+/**
+ * @brief Decides on a Bomb order targeting a territory with a high enemy army presence.
+ * @return Pointer to a Bomb object, or nullptr if no valid target is found.
+ */
 Bomb* Player::decideCardOrderBomb() {
   auto attack = toAttack();
   if(attack.empty()){
@@ -370,7 +469,11 @@ Bomb* Player::decideCardOrderBomb() {
   // bomb the priority territory
   return new Bomb(game, attack[0], this);
 }
-
+ 
+ /**
+ * @brief Decides on a Blockade order to defend a territory.
+ * @return Pointer to a Blockade object, or nullptr if no territory is available to defend.
+ */
 Blockade* Player::decideCardOrderBlockade() {
   auto defend = toDefend();
   if(defend.empty()){
@@ -379,6 +482,10 @@ Blockade* Player::decideCardOrderBlockade() {
   return new Blockade(game, defend.back(), this);
 }
 
+/**
+ * @brief Decides on a Negotiate order with a targeted enemy player.
+ * @return Pointer to a Negotiate object, or nullptr if no valid enemy is found.
+ */
 Negotiate* Player::decideCardOrderNegotiate() {
   // return nullptr if failed to decide on an order
   auto enemies = getEnemies();
@@ -392,10 +499,19 @@ Negotiate* Player::decideCardOrderNegotiate() {
   return new Negotiate(game, this, target);
 }
 
+/**
+ * @brief Adds reinforcement troops to the player's pool.
+ */
+
 void Player::decideCardReinforcement() {
+
   reinforcementPool += 5;
 }
 
+/**
+ * @brief Identifies enemy players that can be attacked.
+ * @return Vector of Player pointers representing the enemies.
+ */
 std::vector<Player *> Player::getEnemies() {
   vector<Player*> enemies;
   for(auto p: *game->getPlayers()){
@@ -406,22 +522,48 @@ std::vector<Player *> Player::getEnemies() {
   return enemies;
 }
 
+/**
+ * @brief Adds armies to the count of deployed armies in the current turn.
+ * @param a Integer representing the number of armies to add.
+ */
 void Player::addDeployedArmies(int a) {
   deployedArmiesThisTurn += a;
 }
 
+
+ /**
+ * @brief Gets the number of armies deployed by the player in the current turn.
+ * @return Integer representing the number of deployed armies.
+ */
 int Player::getDeployedArmiesThisTurn() const {
   return deployedArmiesThisTurn;
 }
+
+
+/**
+ * @brief Resets the count of deployed armies for the player in the current turn.
+ */
 void Player::clearDeploymentArmies() {
   deployedArmiesThisTurn = 0;
 }
+
+/**
+ * @brief Removes a specified number of armies from the player's reinforcement pool.
+ * @param n Integer representing the number of armies to remove.
+ * @throws runtime_error if the reinforcement pool becomes negative.
+ */
 void Player::removeArmies(int n) {
   reinforcementPool -= n;
   if(reinforcementPool < 0){
     throw std::runtime_error("ASSERT: reinforcementPool overdrawn!");
   }
 }
+
+
+/**
+ * @brief Gets the instance of the GameEngine associated with the player.
+ * @return Pointer to the GameEngine object.
+ */
 GameEngine *Player::getGameInstance() {
   return game;
 }
