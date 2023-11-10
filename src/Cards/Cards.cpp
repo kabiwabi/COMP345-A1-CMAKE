@@ -1,30 +1,48 @@
 #include "Cards.h"
 using namespace std;
 
-//Card constructor with a type parameter
+/**
+ * @brief Constructor for the Card class with a type parameter.
+ * @param type The type of the card.
+ * @param game Pointer to the GameEngine.
+ */
 Card::Card(const CardType& type, GameEngine* game)
 : cardType(type), game(game)
 {
   if(game == nullptr){throw std::runtime_error("Card::Error | Cannot set Card Game Engine to null");}
 }
 
-//Copy constructor
+/**
+ * @brief Copy constructor for the Card class.
+ * @param initial The Card object to be copied.
+ */
 Card::Card(const Card &initial)
   : cardType(initial.cardType), game(initial.game)
 {
   if(game == nullptr){throw std::runtime_error("Card::Error | Cannot set Card Game Engine to null");}
 }
 
+/**
+ * @brief Setter for the card type.
+ * @param type The new card type to set.
+ */
 void Card::setCardType(const CardType& type)
 {
     cardType = type;
 }
 
+/**
+ * @brief Getter for the card type.
+ * @return The card type.
+ */
 CardType Card::getCardType()
 {
     return cardType;
 }
 
+/**
+ * @brief Plays the card, adding an order to the current player's orders list.
+ */
 void Card::play() {
   // check to see whose turn it is
   Player* currentPlayer = game->getCurrentPlayerTurn();
@@ -45,6 +63,11 @@ void Card::play() {
   gameDeck->addCardToDeck(card);
 }
 
+/**
+ * @brief Converts CardType enum to a string.
+ * @param c The CardType to convert.
+ * @return The string representation of the CardType.
+ */
 std::string Card::CardTypeToString(CardType& c) {
   switch (c) {
     case CT_Bomb:
@@ -62,10 +85,15 @@ std::string Card::CardTypeToString(CardType& c) {
   }
 }
 
-// Destructor
+/**
+ * @brief Destructor for the Card class.
+ */
 Card::~Card() = default;
 
-//Copy construct
+/**
+ * @brief Copy constructor for the Hand class.
+ * @param initial The Hand object to be copied.
+ */
 Hand::Hand(const Hand &initial)
 {
   for (auto &&temp : initial.handCards) {
@@ -73,7 +101,9 @@ Hand::Hand(const Hand &initial)
   }
 };
 
-//Destruct
+/**
+ * @brief Destructor for the Hand class.
+ */
 Hand::~Hand()
 {
   for (auto card : handCards) {
@@ -82,10 +112,20 @@ Hand::~Hand()
   handCards.clear();
 }
 
+/**
+ * @brief Get a pointer to the vector of cards in the hand.
+ * @return Pointer to the vector of cards.
+ */
 std::vector<Card *> *Hand::getCards() {
   return &this->handCards;
 }
 
+/**
+ * @brief Get a card from the hand at a specific index.
+ * @param index The index of the card to retrieve.
+ * @return The card at the specified index.
+ * @throw std::invalid_argument if the index is out of range.
+ */
 Card *Hand::getCardFromHand(int index) {
   if (index < 0 || index >= handCards.size()){
     throw std::invalid_argument("Index out of range.");
@@ -93,6 +133,11 @@ Card *Hand::getCardFromHand(int index) {
   return handCards.at(index);
 }
 
+/**
+ * @brief Add a card to the hand.
+ * @param card Pointer to the card to be added.
+ * @throw std::invalid_argument if the card is nullptr.
+ */
 void Hand::addToHand(Card *card) {
   if(card == nullptr){
     throw std::invalid_argument("Card is a nullptr.");
@@ -100,6 +145,11 @@ void Hand::addToHand(Card *card) {
   handCards.push_back(card);
 }
 
+/**
+ * @brief Remove a card of the specified type from the hand.
+ * @param type The type of the card to be removed.
+ * @return Pointer to the removed card or nullptr if not found.
+ */
 Card* Hand::removeCard(CardType type) {
 
   for(int i = 0; i < handCards.size(); i++){
@@ -113,23 +163,27 @@ Card* Hand::removeCard(CardType type) {
   return nullptr;
 }
 
+/**
+ * @brief Default constructor for the Hand class.
+ */
 Hand::Hand() {
   handCards = vector<Card*>();
 }
 
-
-
-
-
-
-//Default constructor
+/**
+ * @brief Default constructor for the Deck class.
+ * @param game Pointer to the GameEngine.
+ * @throw std::runtime_error if the provided GameEngine pointer is null.
+ */
 Deck::Deck(GameEngine* game)
         :game(game)
 {
     if(game == nullptr){throw std::runtime_error("Deck::Error | Cannot set deck Game Engine to null");}
 }
 
-//Destructor
+/**
+ * @brief Destructor for the Deck class.
+ */
 Deck::~Deck()
 {
   for (auto card : deckCards)  {
@@ -138,7 +192,10 @@ Deck::~Deck()
   deckCards.clear();
 }
 
-//copy constructor
+/**
+ * @brief Copy constructor for the Deck class.
+ * @param initial The Deck object to be copied.
+ */
 Deck::Deck(const Deck &initial)
 {
   this->game = initial.game;
@@ -147,7 +204,11 @@ Deck::Deck(const Deck &initial)
   }
 }
 
-//draw card from the deck of hand
+/**
+ * @brief Draw a card from the deck and add it to the specified hand.
+ * @param currentHand The hand to which the card will be added.
+ * @throw std::runtime_error if the deck is empty.
+ */
 void Deck::draw(Hand& currentHand)
 {
   if (deckCards.empty())
@@ -158,17 +219,28 @@ void Deck::draw(Hand& currentHand)
   currentHand.addToHand(c);
 }
 
-//method shuffling the deck of hand
+
+/**
+ * @brief Shuffle the deck of cards.
+ */
 void Deck::shuffleDeck()
 {
   std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
   std::shuffle(std::begin(deckCards), std::end(deckCards), rng);
 }
 
+/**
+ * @brief Add a card to the deck.
+ * @param card Pointer to the card to be added.
+ */
 void Deck::addCardToDeck(Card* card) {
   deckCards.push_back(card);
 }
 
+/**
+ * @brief Remove a card randomly from the deck.
+ * @return Pointer to the removed card.
+ */
 Card *Deck::removeCardRandom() {
   // randomly get a card from the deck
   std::random_device dev;
@@ -182,13 +254,20 @@ Card *Deck::removeCardRandom() {
   return c;
 }
 
+/**
+ * @brief Get a pointer to the vector of cards in the deck.
+ * @return Pointer to the vector of cards.
+ */
 std::vector<Card *> *Deck::getDeckCards() {
   return &this->deckCards;
 };
 
-//for the testing purpose
+/**
+ * @brief Create a deck of cards for testing purposes.
+ *
+ * Assigns 40 cards in the deck vector, each type having 8 cards (5 types).
+ */
 void Deck::create_deck() {
-// Assign 40 cards in deck vector, each type has 8 cards, 5 types
 for (int i = 0; i < 8; i++) {
   for (int j = 0; j < 5; j++) {
     // Type 1 = Bomb

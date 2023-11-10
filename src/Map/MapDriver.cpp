@@ -3,6 +3,11 @@
 
 #include "Map/Map.h"
 
+/**
+ * @brief Test function for loading maps and checking their validity.
+ *
+ * This function loads a series of map files, checks their validity, and prints the results.
+ */
 void testLoadMaps() {
 
   // available map files
