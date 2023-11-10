@@ -1,5 +1,17 @@
 #include "PlayerDriver.h"
 
+/**
+ * @brief Function to test various functionalities of the Player class.
+ * 
+ * This function demonstrates and tests the functionality of the Player class by:
+ * - Setting up a game engine instance.
+ * - Creating a player with a name and a hand of cards.
+ * - Loading a map to access territories.
+ * - Assigning territories to the player and then removing one.
+ * - Displaying the player's territories for defense and attack.
+ * - Testing the stream insertion operator overload for Player.
+ * - Issuing an order for the player and displaying the added order.
+ */
 void testPlayers(){
 
   // mocking argc and argv
