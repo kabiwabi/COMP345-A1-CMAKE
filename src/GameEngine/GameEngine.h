@@ -2,7 +2,7 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
-#include "../Player/Player.h"
+#include "Player/Player.h"
 #include "Map/Map.h"
 #include "Logger/LogObserver.h"
 #include "CommandFile/FileCommandProcessorAdapter.h"
@@ -13,8 +13,13 @@ class Player;
 class Map;
 class Deck;
 
+
+// ----------------------------------------
+// Public GameEngine State Enum
+// ----------------------------------------
 enum GameEngineState {
   GE_Start = 0,
+  GE_Tournament,
   GE_Map_Loaded,
   GE_Map_Validated,
   GE_Players_Added,
@@ -24,106 +29,186 @@ enum GameEngineState {
   GE_Win
 };
 
-/**
- * @brief This class represents the game engine for a board game, handling the game states, players, and main game loop.
- */
 class GameEngine : public Subject, ILoggable {
 private:
-    // Current state of the game engine.
-    GameEngineState state = GE_Start;
-    // Filename for saving/loading game.
-    std::string fileName;
-    // Pointer to the current player's turn.
-    Player* currentPlayerTurn = nullptr;
-    // List of players in the game.
-    std::vector<Player*> players;
-    // List of available commands.
-    std::vector<std::string> commands = {"loadmap <filename>", "validatemap", "addplayer <playername>", "gamestart", "replay", "quit"};
-    // Pointer to the deck of cards.
-    Deck* deck = nullptr;
-    // Pointer to the game map.
-    Map* map = nullptr;
-    // Pointer to the log observer.
-    LogObserver* logObserver = nullptr;
-    // Pointer to the command processor.
-    CommandProcessor* commandProcessor = nullptr;
-    // Pointer to the file command processor adapter.
-    FileCommandProcessorAdapter* adapter = nullptr;
-    // Pointer to the file line reader.
-    FileLineReader* flr = nullptr;
-    // Argument count.
-    int argc;
-    // Argument vector.
-    char** argv;
+  // current state
+  GameEngineState state = GE_Start;
 
-    // Checks for win state and returns the winning player, if any.
-    Player* checkWinState();
-    // Advances to the next player's turn.
-    void nextTurn(int& turn);
-    // Removes players who no longer control any territories.
-    void removePlayersWithNoTerritories();
-    // Prints the list of commands to the console.
-    void printCommands();
-    // Validates if the provided command string is valid.
-    static bool isValid(const std::string& strCommand);
-    // Converts the current state to a string for logging.
-    std::string getCurrentStateToString();
+  // Players
+  std::string fileName;
+  Player* currentPlayerTurn = nullptr;
+  std::vector<Player*> players;
+  std::vector<std::vector<std::string>> tournamentResults;
+
+  bool isDraw = false;
+  bool tournamentEnd = false;
+  std::vector<std::string> commands = {"tournament -M <mapFiles> -P <playerStrategies> -G <numGames> -D <maxTurns>", "loadmap <filename>", "validatemap", "addplayer <playername>", "gamestart", "replay", "quit"};
+
+  // Deck
+  Deck* deck = nullptr;
+
+  // Map
+  Map* map = nullptr;
+
+  // Logger
+  LogObserver* logObserver = nullptr;
+
+  // Command Processor
+  CommandProcessor* commandProcessor = nullptr;
+  FileCommandProcessorAdapter* adapter = nullptr;
+  FileLineReader* flr = nullptr;
+
+  // CL Args
+  int argc;
+  char** argv;
+
+  // testing
+  bool testing = false;
+
 
 public:
-    // Constructor with command line arguments.
-    GameEngine(int argc, char** argv);
-    // Constructor with specified game state and command line arguments.
-    explicit GameEngine(GameEngineState state, int argc, char** argv);
-    // Destructor.
-    ~GameEngine() override;
-    // Sets the current state of the game engine.
-    void setCurrentState(GameEngineState engineState);
-    // Loads the map from a file.
-    void loadMap(const std::string& path);
-    // Validates the loaded game map.
-    bool validateMap();
-    // Returns a string representation of the current state for logging.
-    std::string stringToLog() override;
-    // Executes the startup phase of the game.
-    void startupPhase();
-    // Executes the reinforcement phase of the game.
-    void reinforcementPhase();
-    // Executes the issue orders phase of the game.
-    void issueOrdersPhase();
-    // Executes the orders.
-    void executeOrdersPhase();
-    // Distributes territories among players.
-    void distributeTerritories();
-    // Determines the order of players.
-    void playerOrder();
-    // Gets the deck of cards.
-    Deck* getDeck();
-    // Gets the game map.
-    Map* getMap();
-    // Main game loop.
-    void mainGameLoop();
-    // Gets the log observer.
-    LogObserver* getLogObserver();
-    // Gets the current player's turn.
-    Player* getCurrentPlayerTurn();
-    // Validates the maximum number of players.
-    void validateMaxPlayers();
-    // Validates the minimum number of players.
-    void validateMinPlayers();
-    // Adds a new player to the game.
-    void addPlayer(Player* player);
-    // Resets the game to initial state.
-    void resetGame();
-    // Gets the list of players.
-    std::vector<Player*>* getPlayers();
-    // Gets the current state of the game engine.
-    GameEngineState getCurrentState();
-    // Gets the command processor.
-    CommandProcessor* getCommandProcessor();
-    // Gets the file line reader.
-    FileLineReader* getFlir();
-    // Gets the file command processor adapter.
-    FileCommandProcessorAdapter* getFileCommandProcessorAdapter();
-    // Sets the current player's turn.
-    void setCurrentPlayer(Player* player);
+  std::vector <std::string> allMaps;
+  std::vector <std::string> allPlayerStrategies;
+  int numberOfGames = 0;
+  int maxNumberOfTurns = 0;
+  bool multipleTournaments = false;
+  // ----------------------------------------
+  // Constructors
+  // ----------------------------------------
+  GameEngine(int argc, char** argv, bool testing = false);
+  explicit GameEngine(GameEngineState state, int argc, char** argv, bool testing = false);
+
+  // ----------------------------------------
+  // Modifications + setters
+  // ----------------------------------------
+  void setCurrentState(GameEngineState engineState);
+
+  // ----------------------------------------
+  // Destructor
+  // ----------------------------------------
+  ~GameEngine() override;
+
+  // ----------------------------------------
+  // Validate Tournament
+  // ----------------------------------------
+
+  void validateTournament();
+
+  // ----------------------------------------
+  // load game map
+  // ----------------------------------------
+  void loadMap(const std::string& path);
+
+  // ----------------------------------------
+  // Validate game map
+  // ----------------------------------------
+  bool validateMap();
+
+  // ----------------------------------------
+  // convert current state to string
+  // ----------------------------------------
+  std::string stringToLog() override;
+
+  std::string getTournamentResults();
+
+
+  // ----------------------------------------
+  // initiates startup phase for commands read from the console
+  // ----------------------------------------
+  void startupPhase();
+
+  // ----------------------------------------
+  // reinforcement phase
+  // ----------------------------------------
+  void reinforcementPhase();
+
+  // ----------------------------------------
+  // Issuing Orders Phase
+  // ----------------------------------------
+  void issueOrdersPhase();
+
+  // ----------------------------------------
+  // Execute Orders Phase
+  // ----------------------------------------
+  void executeOrdersPhase();
+
+  // ----------------------------------------
+  // distributes all territories evenly between the players
+  // ----------------------------------------
+  void distributeTerritories();
+
+  // ----------------------------------------
+  // determines a random order of play for players
+  // ----------------------------------------
+  void playerOrder();
+
+  Deck* getDeck();
+
+  Map* getMap();
+
+  void mainGameLoop(int maxRounds = 500);
+
+  LogObserver* getLogObserver();
+
+  bool isTesting() const;
+
+  Player* getCurrentPlayerTurn();
+
+  void validateMaxPlayers();
+
+  void validateMinPlayers();
+
+  void addPlayer(Player* player);
+
+  void resetGame();
+
+  void runTournament();
+
+  void generateRandomDeck(int deckSize = 15);
+
+  void assignCardsEvenly();
+
+
+  // getters
+  std::vector<Player*>* getPlayers();
+
+  GameEngineState getCurrentState();
+
+  CommandProcessor* getCommandProcessor();
+
+  FileLineReader* getFlir();
+
+  FileCommandProcessorAdapter* getFileCommandProcessorAdapter();
+
+  // setters
+  void setCurrentPlayer(Player* player);
+
+private:
+  // check win state
+  Player* checkWinState();
+  void nextTurn(int& turn);
+  // ----------------------------------------
+  // remove players with no territories
+  // ----------------------------------------
+  void removePlayersWithNoTerritories();
+
+
+private:
+    // ----------------------------------------
+    // prints all the commands available for the user to use
+    // ----------------------------------------
+    void printCommands();
+
+    // ----------------------------------------
+    // checks whether a command is valid or not
+    // ----------------------------------------
+    static bool isValid(const std::string& strCommand);
+
+    // ----------------------------------------
+    // convert current state to string
+    // ----------------------------------------
+    std::string getCurrentStateToString();
+
+    std::string getPlayerTypeToString();
+
 };

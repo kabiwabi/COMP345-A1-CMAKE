@@ -1,32 +1,14 @@
 #include "GameEngineDriver.h"
 
-/**
- * @brief Test function for the startup phase of the Game Engine.
- *
- * This function initializes a GameEngine object with command-line arguments and
- * calls its startupPhase method to simulate the startup phase of the game.
- *
- * @param argc Number of command-line arguments.
- * @param argv Array of command-line arguments.
- */
 void testStartupPhase(int argc, char** argv){
   auto gameEngine = GameEngine(argc,argv);
   gameEngine.startupPhase();
 }
-
-/**
- * @brief Test function for the main game loop of the Game Engine.
- *
- * This function sets up a game scenario by creating a GameEngine object with command-line
- * arguments, initializing a deck with cards, loading a map, creating players and assigning
- * territories, and finally adding cards to the players' hands. The main game loop is then started.
- *
- * @param argc Number of command-line arguments.
- * @param argv Array of command-line arguments.
- */
-void testMainGameLoop(int argc, char** argv){
+void testGameLoop(int argc, char** argv){
+  // create a game engine
   auto gameEngine = GameEngine(argc, argv);
 
+  // add cards to the gameEngine deck
   auto deck = gameEngine.getDeck();
   deck->addCardToDeck(new Card(CardType::CT_Reinforcement, &gameEngine));
   deck->addCardToDeck(new Card(CardType::CT_Reinforcement, &gameEngine));
@@ -49,15 +31,18 @@ void testMainGameLoop(int argc, char** argv){
   deck->addCardToDeck(new Card(CardType::CT_Blockade, &gameEngine));
 
 
+  // load a map before game starts
   gameEngine.loadMap("../res/TestMap1_valid.map");
 
-  auto player1 = new Player(&gameEngine, new Hand(), "Player 1");
-  auto player2 = new Player(&gameEngine, new Hand(), "Player 2");
-  auto player3 = new Player(&gameEngine, new Hand(), "Player 3");
-  auto player4 = new Player(&gameEngine, new Hand(), "Player 4");
-  auto player5 = new Player(&gameEngine, new Hand(), "Player 5");
-  auto player6 = new Player(&gameEngine, new Hand(), "Player 6");
+  // create players
+  auto player1 = new Player(&gameEngine, new Hand(), "Rick Astley", "Human");
+  auto player2 = new Player(&gameEngine, new Hand(), "Bob Ross", "Aggressive");
+  auto player3 = new Player(&gameEngine, new Hand(), "Felix Kjellberg", "Aggressive");
+  auto player4 = new Player(&gameEngine, new Hand(), "Elon Musk", "Aggressive");
+  auto player5 = new Player(&gameEngine, new Hand(), "Steve Jobs", "Aggressive");
+  auto player6 = new Player(&gameEngine, new Hand(), "James Bond", "Aggressive");
 
+  // adding sets of territories just for testing
   auto map = gameEngine.getMap();
   auto continents = map->getContinents();
 
@@ -85,6 +70,7 @@ void testMainGameLoop(int argc, char** argv){
     player6->addTerritory(*t);
   }
 
+  // manually add cards to player
   player1->getHand()->addToHand(new Card(CardType::CT_Reinforcement, &gameEngine));
   player1->getHand()->addToHand(new Card(CardType::CT_Blockade, &gameEngine));
   player1->getHand()->addToHand(new Card(CardType::CT_Bomb, &gameEngine));

@@ -1,29 +1,34 @@
 #include "CommandProcessor.h"
 #include "../GameEngine.h"
+#include <algorithm>
 
 using namespace std;
 
 regex regexRuleLoadMap("loadmap .+.map$");
 regex regexRulePlayerAdd("addplayer .+");
 
-/**
- * @brief Construct a new Command Processor object
- *
- * @param game Pointer to the GameEngine object
- * @param argc Count of command-line arguments
- * @param argv Array of command-line argument strings
- */
-CommandProcessor::CommandProcessor(GameEngine* game, int argc, char** argv) : game(game) {
-    commandCollection = {};
-    for(int i = 0; i < argc; i++){ rawCommands.emplace_back(argv[i]); }
-    Subject::attach((ILogObserver*)game->getLogObserver());
+vector<string> split(string s, string delimiter) {
+  size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+  string token;
+  vector<string> res;
+
+  while ((pos_end = s.find(delimiter, pos_start)) != string::npos) {
+    token = s.substr(pos_start, pos_end - pos_start);
+    pos_start = pos_end + delim_len;
+    res.push_back(token);
+  }
+
+  res.push_back(s.substr(pos_start));
+  return res;
 }
 
-/**
- * @brief Copy constructor for Command Processor
- *
- * @param c The CommandProcessor object to copy from
- */
+CommandProcessor::CommandProcessor(GameEngine* game, int argc, char** argv) : game(game) {
+  commandCollection = {};
+  // add all program arguments to a raw string
+  for(int i = 0; i < argc; i++){ rawCommands.emplace_back(argv[i]); }
+  Subject::attach((ILogObserver*)game->getLogObserver());
+}
+
 CommandProcessor::CommandProcessor(const CommandProcessor &c) : Subject(c) {
     commandCollection = {};
     for(auto i : c.commandCollection){
@@ -34,23 +39,13 @@ CommandProcessor::CommandProcessor(const CommandProcessor &c) : Subject(c) {
     Subject::attach((ILogObserver*)game->getLogObserver());
 }
 
-/**
- * @brief Get a Command object after reading and validating user input
- *
- * @return Command* Pointer to the newly created Command object
- */
 Command* CommandProcessor::getCommand(){
-    string userInput = readCommand();
+    string userInput = readCommand() ;
     Command* currentCommand = validate(userInput);
     saveCommand(currentCommand);
     return currentCommand;
 }
 
-/**
- * @brief Read a command from the user input
- *
- * @return string The user input string
- */
 string CommandProcessor::readCommand(){
     string userInput;
     cout << "Please enter a command: ";
@@ -59,31 +54,15 @@ string CommandProcessor::readCommand(){
     return userInput;
 }
 
-/**
- * @brief Save the Command object in the command collection
- *
- * @param _currentCommand Pointer to the Command object to save
- */
 void CommandProcessor::saveCommand(Command* _currentCommand){
     commandCollection.push_back(_currentCommand);
     Subject::notify(this);
 }
 
-/**
- * @brief Get the current state of the game
- *
- * @return int The current state as an integer
- */
 int CommandProcessor::getCurrentState(){
     return game->getCurrentState();
 }
 
-/**
- * @brief Validate the user input and create a Command object if valid
- *
- * @param _userInput The user input string to validate
- * @return Command* Pointer to the newly created Command object
- */
 Command* CommandProcessor::validate(const string& _userInput){
 
     auto currentCommandObj = new Command(_userInput, game);
@@ -107,7 +86,25 @@ Command* CommandProcessor::validate(const string& _userInput){
               cout << currentCommandObj->getEffect() << endl;
               return currentCommandObj;
             }
+
+            else if (_userInput.substr(0, _userInput.find(' ')) == "tournament"){
+              TournamentFunctionInput(_userInput);
+              try {
+                game->validateTournament();
+              }
+              catch(std::runtime_error& err){
+                cout<< err.what() << endl;
+                game->setCurrentState(GE_Start);
+                break;
+              }
+              game->setCurrentState(GE_Tournament);
+              currentCommandObj->saveEffect("Tournament started");
+              cout << currentCommandObj->getEffect() << endl;
+              return currentCommandObj;
+            }
+
             break;
+
 
         case GE_Map_Loaded:
             if (_userInput == "validatemap"){
@@ -136,7 +133,17 @@ Command* CommandProcessor::validate(const string& _userInput){
 
                 size_t pos = strCommand.find(' ');
                 std::string playerName = strCommand.substr(pos);
-                new Player(game, new Hand(), playerName);
+
+                // trim spacing
+                std::string::iterator end_pos = std::remove(playerName.begin(), playerName.end(), ' ');
+                playerName.erase(end_pos, playerName.end());
+
+                if(game->isTesting()){
+                  cout << "Game Engine is in testing mode, player will be added automatically as Aggressive." << endl;
+                  new Player(game, new Hand(), playerName, "Random");
+                } else {
+                  new Player(game, new Hand(), playerName, "Human");
+                }
                 currentCommandObj->saveEffect("Player" + playerName + " has been added successfully");
                 game->setCurrentState(GE_Players_Added);
                 cout << currentCommandObj->getEffect() << endl;
@@ -157,13 +164,25 @@ Command* CommandProcessor::validate(const string& _userInput){
 
               size_t pos = strCommand.find(' ');
               std::string playerName = strCommand.substr(pos);
-              new Player(game, new Hand(), playerName);
+
+              // trim spacing
+              std::string::iterator end_pos = std::remove(playerName.begin(), playerName.end(), ' ');
+              playerName.erase(end_pos, playerName.end());
+
+              if(game->isTesting()){
+                cout << "Game Engine is in testing mode, player will be added automatically as Aggressive." << endl;
+                new Player(game, new Hand(), playerName, "Random");
+              } else {
+                new Player(game, new Hand(), playerName, "Human");
+              }
+
               currentCommandObj->saveEffect("Player" + playerName + " has been added successfully");
               cout << currentCommandObj->getEffect() << endl;
               return currentCommandObj;
             }
             else if(_userInput == "gamestart"){
 
+              // Check for minimum 2 players before starting
               try {
                 game->validateMinPlayers();
               }
@@ -178,6 +197,7 @@ Command* CommandProcessor::validate(const string& _userInput){
               game->playerOrder();
               cout<< "Order of play of players determined."<<endl;
 
+              // initialize deck
               game->getDeck()->create_deck();
 
               try{
@@ -228,11 +248,6 @@ Command* CommandProcessor::validate(const string& _userInput){
 }
 
 
-/**
- * @brief Print all commands in the command collection
- *
- * @param collection A collection of Command pointers
- */
 void CommandProcessor::printCommandCollection(const std::vector<Command*>& collection){
     for(auto & i : collection){
         cout << (*i) << endl;
@@ -240,24 +255,16 @@ void CommandProcessor::printCommandCollection(const std::vector<Command*>& colle
     cout << "Current Game State: " << StateToString() << endl;
 }
 
-/**
- * @brief Get the command collection
- *
- * @return vector<Command*> The collection of Command pointers
- */
 vector<Command*> CommandProcessor::getCommandCollection(){
     return commandCollection;
 }
 
-/**
- * @brief Convert the current state of the game to a string representation
- *
- * @return string The string representation of the current game state
- */
 string CommandProcessor::StateToString() {
   switch (game->getCurrentState()) {
     case GE_Start:
         return "Start";
+    case GE_Tournament:
+      return "Tournament";
     case GE_Map_Loaded:
         return "Map Loaded";
     case GE_Map_Validated:
@@ -276,25 +283,12 @@ string CommandProcessor::StateToString() {
   throw std::runtime_error("CommandProcessor::StateToString Assert:Invalid State");
 }
 
-/**
- * @brief Overloaded stream insertion operator for CommandProcessor
- *
- * @param out Reference to ostream object
- * @param c The CommandProcessor object to insert into the stream
- * @return ostream& Reference to the updated ostream object
- */
 ostream & operator << (ostream &out, const CommandProcessor &c)
 {
   out << "Overloaded << operator for Command Processor?" << endl;
   return out;
 }
 
-/**
- * @brief Overloaded assignment operator for CommandProcessor
- *
- * @param other The CommandProcessor object to assign from
- * @return CommandProcessor& Reference to the updated CommandProcessor object
- */
 CommandProcessor& CommandProcessor::operator=(const CommandProcessor &other) {
   if(this == &other){
       return *this;
@@ -305,11 +299,6 @@ CommandProcessor& CommandProcessor::operator=(const CommandProcessor &other) {
   return *this;
 }
 
-/**
- * @brief Convert the last command's effect to a string suitable for logging
- *
- * @return string The formatted log string
- */
 std::string CommandProcessor::stringToLog() {
   std::stringstream ss;
   ss << "COMMAND PROCESSOR: ";
@@ -318,25 +307,85 @@ std::string CommandProcessor::stringToLog() {
   ss << "\"";
   return ss.str();
 }
-
-/**
- * @brief Get the raw command arguments
- *
- * This function provides access to the raw command line arguments that were provided to the CommandProcessor.
- *
- * @return std::vector<std::string>* Pointer to the vector containing the raw command strings.
- */
 std::vector<std::string> *CommandProcessor::getRawCommands() {
   return &rawCommands;
 }
-
-/**
- * @brief Destructor for CommandProcessor
- *
- * Cleans up the CommandProcessor object, ensuring that the observer is properly detached from the subject.
- */
 CommandProcessor::~CommandProcessor() {
   if(game){
     Subject::detach((ILogObserver* )game->getLogObserver());
   }
+}
+
+void CommandProcessor::TournamentFunctionInput(string input) {
+  vector<string> enteredTournamentString = split(input, " ");
+  int i = 1; // skip the first word "tournament"
+  while (i < enteredTournamentString.size()) {
+    if (enteredTournamentString[i] == "-M") {
+      while (enteredTournamentString[++i] != "-P") {
+        game->allMaps.push_back(enteredTournamentString[i]);
+      }
+    }
+    else if (enteredTournamentString[i] == "-P") {
+      while (enteredTournamentString[++i] != "-G") {
+        game->allPlayerStrategies.push_back(enteredTournamentString[i]);
+      }
+
+    }
+    else if (enteredTournamentString[i] == "-G") {
+      i++;
+      string temp;
+      temp = enteredTournamentString[i++];
+      if (!isdigit(temp[0])) {
+        cout << "The number of games has to be a digit" << endl;
+        exit(0);
+      }
+      game->numberOfGames = stoi(temp);
+
+    }
+    else if (enteredTournamentString[i] == "-D") {
+      i++;
+      string temp;
+      temp = enteredTournamentString[i++];
+      if (!isdigit(temp[0])) {
+        cout << "The max number of turns has to be a digit" << endl;
+        exit(0);
+      }
+      game->maxNumberOfTurns = stoi(temp);
+    }
+  }
+}
+
+void CommandProcessor::FileTournamentFunctionInput(string input) {
+
+  std::ifstream temp(input);
+  int numberOfTournaments = 0;
+  int tournamentsPlayed = 0;
+  std::string lineCounter;
+  while (std::getline(temp , lineCounter)){
+    numberOfTournaments++;
+  }
+
+  if(numberOfTournaments > 1){
+    game->multipleTournaments = true;
+  }
+
+  temp.close();
+  ifstream ifs;
+  string line;
+  ifs.open(input);
+
+  if(!ifs.is_open()){
+    throw std::runtime_error("File already open");
+  }
+  while(getline(ifs, line)){
+    TournamentFunctionInput(line);
+    game->validateTournament();
+    game->runTournament();
+    tournamentsPlayed++;
+    std::cout << std::endl;
+    if(tournamentsPlayed < numberOfTournaments){
+      std::cout << "------- NEXT TOURNAMENT STARTING NOW! -------" << std::endl;
+    }
+  }
+  ifs.close();
 }

@@ -1,19 +1,11 @@
 #include "LoggingObserverDriver.h"
 
-/**
- * @brief Test function for logging observer functionality.
- *
- * This function tests the logging observer by creating a game engine, players, loading a map,
- * creating orders, attaching observers, and testing various game state changes and order execution.
- *
- * @param argc The number of command line arguments.
- * @param argv An array of command line argument strings.
- */
+
 void testLoggingObserver(int argc, char** argv){
 
   auto gameEngine = new GameEngine(argc, argv);
-  auto player1 = new Player(gameEngine, new Hand(), "Player1");
-  auto player2 = new Player(gameEngine, new Hand(), "Player2");
+  auto player1 = new Player(gameEngine, new Hand(), "Player1", "Aggressive");
+  auto player2 = new Player(gameEngine, new Hand(), "Player2", "Aggressive");
 
   gameEngine->loadMap("../res/TestMap1_valid.map");
 

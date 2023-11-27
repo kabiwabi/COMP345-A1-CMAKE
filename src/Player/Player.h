@@ -1,13 +1,12 @@
 #pragma once
 
 #include "GameEngine/GameEngine.h"
-#include "Cards/Cards.h"
-#include "Orders/Orders.h"
 #include "Map/Map.h"
+#include "Orders/Orders.h"
 
-#include <vector>
-#include <utility>
 #include <algorithm>
+#include <utility>
+#include <vector>
 
 class Territory;
 enum CardType : int;
@@ -19,14 +18,9 @@ class Airlift;
 class Bomb;
 class Blockade;
 class Negotiate;
+class PlayerStrategy;
+class Card;
 
-/**
- * @class Player
- * @brief Represents a player in the game.
- *
- * This class is responsible for managing the player's state,
- * including their territories, cards, orders, and game phase.
- */
 class Player {
 private:
   std::string phase;
@@ -38,6 +32,8 @@ private:
   std::string name;
   std::vector<Player*> friendlyPlayers;
 
+  PlayerStrategy* strategy;
+
 
   int deployedArmiesThisTurn = 0;
 
@@ -45,31 +41,13 @@ public:
   // --------------------------------
   // Constructors
   // --------------------------------
-   /**
-   * @brief Constructs a new Player object.
-   * @param game The game engine instance.
-   * @param cards The player's hand of cards.
-   * @param name The name of the player.
-   */
-  Player(GameEngine* game, Hand* cards, std::string name);
-  /**
-   * @brief Destructor for the Player class.
-   */
+  Player(GameEngine* game, Hand* cards, std::string  name, const std::string& strategy);
   ~Player();
-  /**
-   * @brief Copy constructor for the Player class.
-   * @param p The Player object to be copied.
-   */
   Player(const Player &p) = default;
 
   // --------------------------------
   // Operator Overloads
   // --------------------------------
-   /**
-   * @brief Overloads the assignment operator.
-   * @param other The Player object to assign from.
-   * @return Reference to the updated Player object.
-   */
   Player& operator=(const Player &other);
 
   // --------------------------------
@@ -86,21 +64,11 @@ public:
   void addReinforcement(int reinforcement);
   int getContinentBonus();
   Territory* findFirstNeighbourTerritory(Territory* target);
-    /**
-   * @brief Gets the list of enemy players.
-   * @return Vector of pointers to Player objects representing enemies.
-   */
   std::vector<Player*> getEnemies();
 
-  // --------------------------------
-  // Strategies
-  // --------------------------------
-  Order* decideOrder(CardType);
-  Airlift* decideCardOrderAirlift();
-  Bomb* decideCardOrderBomb();
-  Blockade* decideCardOrderBlockade();
-  Negotiate* decideCardOrderNegotiate();
-  void decideCardReinforcement();
+  PlayerStrategy* getStrategy() const;
+
+  Order* createOrderFromCard(Card* card);
 
   // --------------------------------
   // Setters
@@ -111,6 +79,8 @@ public:
   void setPhase(std::string ph);
   void addDeployedArmies(int a);
   void clearDeploymentArmies();
+  void setDeployedArmiesThisTurn(int a);
+  void setStrategy(const std::string& strategy);
 
   // --------------------------------
   // Getters
@@ -125,19 +95,8 @@ public:
   GameEngine* getGameInstance();
 
 
-public:
 
-  /**
-   * @brief Overloads the stream insertion operator for the Player class.
-   * @param out The output stream.
-   * @param player The Player object to be inserted into the stream.
-   * @return Reference to the output stream.
-   */
+public:
   friend std::ostream& operator <<(std::ostream &out, const Player &player);
-    /**
-   * @brief Determines if the player can attack another player.
-   * @param pPlayer Pointer to the Player object to potentially attack.
-   * @return True if the player can attack, false otherwise.
-   */
   bool canAttack(Player *pPlayer);
 };

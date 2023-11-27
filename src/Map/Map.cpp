@@ -7,22 +7,11 @@
 //
 // ----------------------------------------------------------------------------------------------------------------
 
-/**
- * @brief Validates the map by checking if it is strongly connected and territories are associated with continents.
- *
- * @return True if the map is valid, otherwise false.
- */
 bool Map::validate()
 {
   return isMapStronglyConnected() && isTerritories1to1Continents();
 }
 
-/**
- * @brief Performs depth-first search (DFS) on the given territory.
- *
- * @param territory The starting territory for DFS.
- * @param visited Reference to the vector of visited territories.
- */
 void Map::DFS(Territory* territory, std::vector<Territory*> &visited)
 {
   visited.push_back(territory);
@@ -35,12 +24,6 @@ void Map::DFS(Territory* territory, std::vector<Territory*> &visited)
   }
 }
 
-/**
- * @brief Checks if a territory is strongly connected by performing DFS.
- *
- * @param territory The territory to check.
- * @return True if the territory is strongly connected, otherwise false.
- */
 bool Map::isTerritoryStronglyConnected(Territory* territory)
 {
   std::vector<Territory *> visited{};
@@ -48,11 +31,6 @@ bool Map::isTerritoryStronglyConnected(Territory* territory)
   return visited.size() == territories.size();
 }
 
-/**
- * @brief Checks if the entire map is strongly connected by checking each territory.
- *
- * @return True if the map is strongly connected, otherwise false.
- */
 bool Map::isMapStronglyConnected()
 {
   return std::all_of(territories.begin(), territories.end(), [this](
@@ -63,31 +41,16 @@ bool Map::isMapStronglyConnected()
       });
 }
 
-/**
- * @brief Checks if each continent has at least one territory associated with it.
- *
- * @return True if each continent has at least one territory, otherwise false.
- */
 bool Map::isTerritories1to1Continents()
 {
   return std::all_of(continents.begin(), continents.end(), [](Continent *c){return !c->getTerritories()->empty();});
 }
 
-/**
- * @brief Adds a continent to the map.
- *
- * @param continent The continent to add.
- */
 void Map::addContinent(Continent *continent)
 {
   this->continents.push_back(continent);
 }
 
-/**
- * @brief Adds a territory to the map.
- *
- * @param territory The territory to add.
- */
 void Map::addTerritory(Territory *territory)
 {
   this->territories.push_back(territory);
@@ -96,154 +59,84 @@ void Map::addTerritory(Territory *territory)
 // --------------------------------------------------
 // Getters
 // --------------------------------------------------
-/**
- * @brief Gets the name of the map.
- *
- * @return The name of the map.
- */
 std::string Map::getName()
 {
-    return this->name;
+  return this->name;
 }
 
-/**
- * @brief Gets the image associated with the map.
- *
- * @return The image file name.
- */
 std::string Map::getImage()
 {
-    return this->image;
+  return this->image;
 }
 
-/**
- * @brief Gets the author of the map.
- *
- * @return The name of the map's author.
- */
 std::string Map::getAuthor()
 {
-    return this->author;
+  return this->author;
 }
 
-/**
- * @brief Gets the wrap setting of the map.
- *
- * @return True if wrap is enabled, otherwise false.
- */
 bool Map::getWrap() const
 {
-    return this->wrap;
+  return this->wrap;
 }
 
-/**
- * @brief Gets the scroll setting of the map.
- *
- * @return True if scroll is horizontal, otherwise false.
- */
 bool Map::getScroll() const
 {
-    return this->scroll;
+  return this->scroll;
 }
 
-/**
- * @brief Gets the warn setting of the map.
- *
- * @return True if warning is enabled, otherwise false.
- */
 bool Map::getWarn() const
 {
-    return this->warn;
+  return this->warn;
 }
 
-/**
- * @brief Gets a pointer to the vector of territories in the map.
- *
- * @return Pointer to the vector of territories.
- */
 std::vector<Territory*>* Map::getTerritories()
 {
-    return &this->territories;
+  return &this->territories;
 }
 
-/**
- * @brief Gets a pointer to the vector of continents in the map.
- *
- * @return Pointer to the vector of continents.
- */
 std::vector<Continent*>* Map::getContinents()
 {
-    return &this->continents;
+  return &this->continents;
 }
 
 // --------------------------------------------------
 // setters
 // --------------------------------------------------
 
-/**
- * @brief Sets the name of the map.
- *
- * @param _name The new name of the map.
- */
 void Map::setName(std::string _name)
 {
-    this->name = std::move(_name);
+  this->name = std::move(_name);
 }
 
-/**
- * @brief Sets the image file name associated with the map.
- *
- * @param _image The new image file name.
- */
 void Map::setImage(std::string _image)
 {
-    this->image = std::move(_image);
+  this->image = std::move(_image);
 }
 
-/**
- * @brief Sets the author of the map.
- *
- * @param _author The new author of the map.
- */
 void Map::setAuthor(std::string _author)
 {
-    this->author = std::move(_author);
+  this->author = std::move(_author);
 }
 
-/**
- * @brief Sets the wrap setting of the map.
- *
- * @param _wrap The new wrap setting.
- */
 void Map::setWrap(bool _wrap)
 {
-    this->wrap = _wrap;
+  this->wrap = _wrap;
 }
 
-/**
- * @brief Sets the scroll setting of the map.
- *
- * @param _scroll The new scroll setting.
- */
 void Map::setScroll(bool _scroll)
 {
-    this->scroll = _scroll;
+  this->scroll = _scroll;
 }
 
-/**
- * @brief Sets the warn setting of the map.
- *
- * @param _warn The new warn setting.
- */
 void Map::setWarn(bool _warn)
 {
-    this->warn = _warn;
+  this->warn = _warn;
 }
 
-/**
- * @brief Destructor for the Map class.
- * Deletes all territories and continents associated with the map.
- */
+// --------------------------------------------------
+// Destructors + Constructors + Operator Overloads
+// --------------------------------------------------
+
 Map::~Map() {
   for(auto t : territories){
     delete t;
@@ -254,13 +147,7 @@ Map::~Map() {
   }
 }
 
-/**
- * @brief Stream insertion operator for the Map class.
- *
- * @param stream The output stream.
- * @param other The Map object.
- * @return The output stream.
- */
+
 std::ostream &operator<<(std::ostream &stream, const Map &other) {
   stream << "Map Name: " << other.name << '\n'
   << "Map Author: " << other.author << '\n'
@@ -282,11 +169,6 @@ std::ostream &operator<<(std::ostream &stream, const Map &other) {
   return stream;
 }
 
-/**
- * @brief Copy constructor for the Map class.
- *
- * @param other The Map object to copy.
- */
 Map::Map(const Map &other)
 : name(other.name), author(other.author), warn(other.warn), scroll(other.scroll), image(other.image), wrap(other.wrap), game(other.game)
 {
@@ -301,12 +183,6 @@ Map::Map(const Map &other)
 
 }
 
-/**
- * @brief Copy assignment operator for the Map class.
- *
- * @param other The Map object to copy.
- * @return Reference to the assigned Map object.
- */
 Map &Map::operator=(const Map &other) {
   if(this == &other){
     return *this;
@@ -328,128 +204,75 @@ Map &Map::operator=(const Map &other) {
   return *this;
 }
 
-/**
- * @brief Constructor for the Map class with a GameEngine pointer.
- *
- * @param game Pointer to the GameEngine associated with the map.
- * @throw std::runtime_error if the game pointer is null.
- */
 Map::Map(GameEngine* game)
   :game(game)
 {
   if(game == nullptr){throw std::runtime_error("Map::Error | Cannot set map Game Engine to null");}
 }
 
-/**
- * @brief Constructor for the Territory class.
- *
- * @param name The name of the territory.
- */
+
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Territory
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+
 Territory::Territory(std::string name)
     : name(std::move(name)), continent(nullptr), player(nullptr)
 {}
 
-/**
- * @brief Adds an adjacent territory to the current territory.
- *
- * @param territory The adjacent territory to add.
- */
 void Territory::addAdjacentTerritory(Territory* territory)
 {
   this->adjacentTerritories.push_back(territory);
 }
 
-/**
- * @brief Gets the name of the territory.
- *
- * @return The name of the territory.
- */
 std::string Territory::getName()
 {
   return this->name;
 }
 
-/**
- * @brief Gets a pointer to the vector of adjacent territories.
- *
- * @return Pointer to the vector of adjacent territories.
- */
 std::vector<Territory *>* Territory::getAdjacentTerritories()
 {
   return &this->adjacentTerritories;
 }
 
-/**
- * @brief Gets the X-coordinate of the territory.
- *
- * @return The X-coordinate of the territory.
- */
 int Territory::getX() const
 {
   return this->x;
 }
 
-/**
- * @brief Gets the Y-coordinate of the territory.
- *
- * @return The Y-coordinate of the territory.
- */
 int Territory::getY() const
 {
   return this->y;
 }
 
-/**
- * @brief Sets the X-coordinate of the territory.
- *
- * @param _x The new X-coordinate.
- */
 void Territory::setX(int _x)
 {
   this->x = _x;
 }
 
-/**
- * @brief Sets the Y-coordinate of the territory.
- *
- * @param _y The new Y-coordinate.
- */
 void Territory::setY(int _y)
 {
   this->y = _y;
 }
 
-/**
- * @brief Gets the continent associated with the territory.
- *
- * @return Pointer to the continent associated with the territory.
- */
 Continent* Territory::getContinent()
 {
   return this->continent;
 }
 
-/**
- * @brief Sets the continent associated with the territory.
- *
- * @param c Pointer to the new continent.
- */
 void Territory::setContinent(Continent* c)
 {
   this->continent = c;
 }
 
-/**
- * @brief Default copy constructor for the Territory class.
- */
+// avoid deep copy (due to other territories being only pointers)
 Territory::Territory(const Territory &other)= default;
 
-/**
- * @brief Copy assignment operator for the Territory class.
- *
- * @param other The Territory object to copy.
- * @return Reference to the assigned Territory object.
- */
 Territory& Territory::operator=(const Territory &other) {
   if(this == &other){
     return *this;
@@ -468,44 +291,20 @@ Territory& Territory::operator=(const Territory &other) {
   return *this;
 }
 
-/**
- * @brief Stream insertion operator for the Territory class.
- *
- * @param stream The output stream.
- * @param other The Territory object.
- * @return The output stream.
- */
 std::ostream &operator<<(std::ostream &stream, const Territory &other) {
   stream << "Territory Name: " << other.name << '\n'
          << "Territory Coordinates: " << '(' << other.x << ", " << other.y << ')' << '\n';
   return stream ;
 }
 
-/**
- * @brief Gets the number of armies in the territory.
- *
- * @return The number of armies in the territory.
- */
 int Territory::getArmies() const {
   return this->armies;
 }
 
-/**
- * @brief Sets the number of armies in the territory.
- *
- * @param army_units The new number of armies.
- */
 void Territory::setArmies(int army_units) {
   this->armies = army_units;
 }
 
-/**
- * @brief Removes a specified number of army units from the territory.
- *
- * @param removed The number of armies to remove.
- * @return The remaining number of armies in the territory.
- * @throw std::runtime_error if the specified number of armies is negative or exceeds the current number of armies.
- */
 int Territory::removeArmyUnits(int removed) {
   if(removed < 0){ throw std::runtime_error("Cannot remove a negative amount of army units."); }
   int total = this->armies - removed;
@@ -514,13 +313,6 @@ int Territory::removeArmyUnits(int removed) {
   return total;
 }
 
-/**
- * @brief Adds a specified number of army units to the territory.
- *
- * @param added The number of armies to add.
- * @return The total number of armies in the territory after addition.
- * @throw std::runtime_error if the specified number of armies is negative.
- */
 int Territory::addArmyUnits(int added) {
   if(added < 0){ throw std::runtime_error("Cannot add a negative amount of army units."); }
   int total = this->armies + added;
@@ -528,83 +320,58 @@ int Territory::addArmyUnits(int added) {
   return total;
 }
 
-/**
- * @brief Gets the player who owns the territory.
- *
- * @return Pointer to the player who owns the territory.
- */
 Player *Territory::getPlayer() {
   return this->player;
 }
 
-/**
- * @brief Sets the player who owns the territory.
- *
- * @param p Pointer to the new owner player.
- */
 void Territory::setPlayer(Player* p) {
   this->player = p;
 }
+bool Territory::isAdjacent(Territory*& pTerritory) {
+  for(auto t : this->adjacentTerritories){
+    if(t == pTerritory){
+      return true;
+    }
+  }
+  return false;
+}
 
-/**
- * @brief Constructor for the Continent class.
- *
- * @param name The name of the continent.
- * @param bonus The bonus value associated with the continent.
- */
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                Continent
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+
+
 Continent::Continent(std::string name, int bonus)
 {
   this->name = std::move(name);
   this->bonus = bonus;
 }
 
-/**
- * @brief Adds a territory to the continent.
- *
- * @param territory The territory to add.
- */
 void Continent::addTerritory(Territory* territory)
 {
   this->territories.push_back(territory);
 }
 
-/**
- * @brief Gets the name of the continent.
- *
- * @return The name of the continent.
- */
 std::string Continent::getName()
 {
   return this->name;
 }
 
-/**
- * @brief Gets the bonus value associated with the continent.
- *
- * @return The bonus value.
- */
 int Continent::getBonus() const
 {
   return this->bonus;
 }
 
-/**
- * @brief Gets a pointer to the vector of territories in the continent.
- *
- * @return Pointer to the vector of territories.
- */
 std::vector<Territory*>* Continent::getTerritories()
 {
   return &this->territories;
 }
 
-/**
- * @brief Stream insertion operator for the Continent class.
- *
- * @param stream The output stream.
- * @param other The Continent object.
- * @return The output stream.
- */
 std::ostream &operator<<(std::ostream &stream, const Continent &other) {
   stream << "Continent Name: " << other.name << '\n'
          << "Continent Bonus: " << other.bonus << '\n';
@@ -616,12 +383,6 @@ std::ostream &operator<<(std::ostream &stream, const Continent &other) {
   return stream;
 }
 
-/**
- * @brief Copy assignment operator for the Continent class.
- *
- * @param other The Continent object to copy.
- * @return Reference to the assigned Continent object.
- */
 Continent &Continent::operator=(const Continent &other) {
   if(&other == this){
     return *this;
@@ -633,23 +394,24 @@ Continent &Continent::operator=(const Continent &other) {
   return *this;
 }
 
-/**
- * @brief Default copy constructor for the Continent class.
- */
 Continent::Continent(const Continent &other) = default;
 
-/**
- * @brief Loads a map from a file.
- *
- * @param path The file path of the map file.
- * @param out_map Pointer to the Map object to store the loaded map.
- * @throw std::runtime_error if the file cannot be opened.
- */
+
+
+// -----------------------------------------------------------------------------------------------------------------
+//
+//
+//                                                MapLoader
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+
 void MapLoader::load(const std::string& path, Map* out_map)
 {
   std::ifstream input_file(path, std::ios::in);
   std::string line;
 
+  // check if file is open
   if (!input_file.is_open())
   {
     throw std::runtime_error("Could not open file: " + path);
@@ -672,14 +434,6 @@ void MapLoader::load(const std::string& path, Map* out_map)
   input_file.close();
 }
 
-/**
- * @brief Parses a line from the map file and updates the map accordingly.
- *
- * @param line The line to parse.
- * @param map Pointer to the Map object.
- * @param mapLoaderState Reference to the MapLoaderState object.
- * @throw std::runtime_error if the map file is invalid or if there are formatting errors.
- */
 void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoaderState)
 {
 
@@ -739,6 +493,7 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
       }
       else
       {
+        // parse continents
         std::string delimiter = "=";
         if (line.find(delimiter) != std::string::npos)
         {
@@ -758,9 +513,12 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
         }
       }
       break;
+      // FORMAT: Territory name, x, y, continent, adjacent territories
     case ReadingState_Territories:
 
+      // parse territories
       std::string delimiter = ",";
+      // Territory
       Territory* territory = nullptr;
 
       if (line.find(delimiter) != std::string::npos)
@@ -768,9 +526,11 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
         std::string name = line.substr(0, line.find(delimiter));
         line = line.substr(line.find(delimiter) + 1, line.length());
 
+        // check if territory exists in territoriesToCreate before creating a new one
         if (mapLoaderState.territoriesToCreate.find(name) != mapLoaderState.territoriesToCreate.end())
         {
           territory = mapLoaderState.territoriesToCreate[name];
+          // remove from territoriesToCreate
           mapLoaderState.territoriesToCreate.erase(name);
         }
         else
@@ -779,12 +539,14 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
         }
       }
 
+      // parse the rest of the line
       while (!line.empty())
       {
         auto delimiter_location = line.find(delimiter);
         std::string value = line.substr(0, delimiter_location);
         line = delimiter_location == std::string::npos ? "" : line.substr(delimiter_location + 1, line.length());
 
+        // x
         if (territory->getX() == -1)
         {
           try{
@@ -796,6 +558,7 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
           }
           continue;
         }
+          // y
         else if (territory->getY() == -1)
         {
           try{
@@ -807,8 +570,10 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
           }
           continue;
         }
+          // continent
         else if (territory->getContinent() == nullptr)
         {
+          // check if continents exists in hashmap
           if (mapLoaderState.continents.find(value) == mapLoaderState.continents.end())
           {
             throw std::runtime_error("Invalid continent: " + value);
@@ -820,8 +585,10 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
           }
           continue;
         }
+          // adjacent territories
         else
         {
+          // check if territory exists in hashmap
           if (mapLoaderState.territories.find(value) != mapLoaderState.territories.end())
           {
             territory->addAdjacentTerritory(mapLoaderState.territories[value]);
@@ -829,12 +596,16 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
           else
           {
             Territory* adjacentTerritory;
+            // check inside territories to create
             if(mapLoaderState.territoriesToCreate.find(value) != mapLoaderState.territoriesToCreate.end()){
+              // use previously created
               adjacentTerritory = mapLoaderState.territoriesToCreate[value];
             } else {
+              // create new territory
               adjacentTerritory = new Territory(value);
             }
             territory->addAdjacentTerritory(adjacentTerritory);
+            // add to territoriesToCreate
             mapLoaderState.territoriesToCreate[value] = adjacentTerritory;
           }
         }
@@ -845,36 +616,19 @@ void MapLoader::parseLine(std::string &line, Map* map, MapLoaderState& mapLoader
   }
 }
 
-/**
- * @brief Removes leading whitespaces from a string.
- *
- * @param s The input string.
- * @return The string with leading whitespaces removed.
- */
+// Utils
 std::string MapLoader::ltrim(const std::string &s)
 {
   size_t start = s.find_first_not_of(" \n\r\t\f\v");
   return (start == std::string::npos) ? "" : s.substr(start);
 }
 
-/**
- * @brief Removes trailing whitespaces from a string.
- *
- * @param s The input string.
- * @return The string with trailing whitespaces removed.
- */
 std::string MapLoader::rtrim(const std::string &s)
 {
   size_t end = s.find_last_not_of(" \n\r\t\f\v");
   return (end == std::string::npos) ? "" : s.substr(0, end + 1);
 }
 
-/**
- * @brief Removes leading and trailing whitespaces from a string.
- *
- * @param s The input string.
- * @return The string with leading and trailing whitespaces removed.
- */
 std::string MapLoader::trim(const std::string &s) {
   return rtrim(ltrim(s));
 }

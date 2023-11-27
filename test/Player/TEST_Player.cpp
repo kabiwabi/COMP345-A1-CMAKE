@@ -10,8 +10,8 @@ TEST(PlayerTestSuite, PlayerAddTerritories)
   int argc = 1;
   char* argv[] = {(char*)"-console"};
 
-  GameEngine gameEngine = GameEngine(argc, argv);
-  auto p = new Player(&gameEngine, new Hand(), "Bob");
+  GameEngine gameEngine = GameEngine(argc, argv, true);
+  auto p = new Player(&gameEngine, new Hand(), "Bob", "Aggressive");
 
   gameEngine.loadMap("res/TestMap1_valid.map");
   auto map_territories = gameEngine.getMap()->getTerritories();
@@ -39,8 +39,8 @@ TEST(PlayerTestSuite, PlayerRemoveTerritories)
   int argc = 1;
   char* argv[] = {(char*)"-console"};
 
-  GameEngine gameEngine = GameEngine(argc, argv);
-  auto p = new Player(&gameEngine, new Hand(), "Bob");
+  GameEngine gameEngine = GameEngine(argc, argv, true);
+  auto p = new Player(&gameEngine, new Hand(), "Bob", "Aggressive");
 
   gameEngine.loadMap("res/TestMap1_valid.map");
   auto map_territories = gameEngine.getMap()->getTerritories();
@@ -73,9 +73,9 @@ TEST(PlayerTestSuite, PlayerAttacknDefendTerritories)
   int argc = 1;
   char* argv[] = {(char*)"-console"};
 
-  GameEngine gameEngine = GameEngine(argc, argv);
-  auto p1 = new Player(&gameEngine, new Hand(), "Bob");
-  auto p2 = new Player(&gameEngine, new Hand(), "Joe");
+  GameEngine gameEngine = GameEngine(argc, argv, true);
+  auto p1 = new Player(&gameEngine, new Hand(), "Bob", "Aggressive");
+  auto p2 = new Player(&gameEngine, new Hand(), "Joe", "Aggressive");
 
   gameEngine.loadMap("res/TestMap1_valid.map");
   auto mapContinents = gameEngine.getMap()->getContinents();

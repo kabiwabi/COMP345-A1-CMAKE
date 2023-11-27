@@ -1,38 +1,33 @@
 #include "CommandProcessingDriver.h"
 
-/**
- * @brief Test function for command processing.
- *
- * This function tests the command processing functionality by either accepting commands from the console or reading from a file based on the command line arguments provided.
- * It creates instances of GameEngine, FileCommandProcessorAdapter, and CommandProcessor to manage the commands and their processing.
- *
- * @param argc The count of command line arguments.
- * @param argv The command line arguments array.
- */
 void testCommandProcessor(int argc, char* argv[]) {
-    // Initialize the game engine with command line arguments
-    auto gameEngine = new GameEngine(argc, argv);
+  auto gameEngine = new GameEngine(argc, argv);
 
-    // Loop control for console command input
+    // Command line or file
+    std::string decision;
+
+    // More commands to enter or not
     bool moreCommands = true;
     std::string moreCommandsDecision;
 
-    // Adapter for processing file commands
+    // Initializing file reading classes
     FileCommandProcessorAdapter adapter(gameEngine, argc, argv);
 
-    // Processor for managing command input and execution
+    // Initializing command line reading class
     CommandProcessor cpr = CommandProcessor(gameEngine, argc, argv);
 
-    // Retrieve raw commands inputted
+    // get raw command line inputs
     auto inputCommandsRaw = cpr.getRawCommands();
 
-    // Check for minimum number of arguments for mode selection
+    // argv[0] program name
+    // argv[1] decision -file or -console
+    // argv[2] - file name
     if(inputCommandsRaw->size() < 2){
-        std::cout << "You must choose between -console or -file <filename>" << std::endl;
-        exit(0);
+      std::cout << "You must choose between -console or -file <filename>" << endl;
+      exit(0);
     }
 
-    // Handle console command input
+    // Command line
     if (inputCommandsRaw->at(1) == "-console"){
         do {
             cpr.getCommand();
@@ -43,33 +38,32 @@ void testCommandProcessor(int argc, char* argv[]) {
             if (!(moreCommandsDecision == "y")){
                 moreCommands = false;
             }
-        } while(moreCommands);
+        }while(moreCommands);
 
-        // Handle file command input
+
+    // File
     } else if (inputCommandsRaw->at(1) == "-file"){
 
-        // Ensure a file name is provided
-        if(inputCommandsRaw->size() < 3) {
-            std::cout << "You must give a file as an argument" << std::endl;
-            exit(0);
-        }
+      // check for file name
+      if(inputCommandsRaw->size() < 3) {
+        std::cout << "You must give a file as an argument" << std::endl;
+        exit(0);
+      }
 
-        // Set the file for reading commands
-        gameEngine->getFlir()->setFile(inputCommandsRaw->at(2));
+      gameEngine->getFlir()->setFile(inputCommandsRaw->at(2));
 
-        // Process commands from the file
-        adapter.commandLineToFile(gameEngine->getFlir());
+      // Adapter functionality
+      adapter.commandLineToFile(gameEngine->getFlir());
 
-        // Read commands until the end of file
-        while(!gameEngine->getFlir()->getReadComplete()){
-            adapter.getCommand();
-        }
+      while(!gameEngine->getFlir()->getReadComplete()){
 
-        // Print out the processed commands
-        adapter.printCommandCollection(adapter.getCommandCollection());
+          adapter.getCommand();
+      }
 
-    } else {
-        // Throw an error if the command line argument is invalid
+      adapter.printCommandCollection(adapter.getCommandCollection());
+
+    }
+    else {
         throw std::runtime_error("Invalid Command line arguments");
     }
 }

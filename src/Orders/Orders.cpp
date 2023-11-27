@@ -3,12 +3,6 @@
 #include "Orders.h"
 #include "Map/Map.h"
 #include "Player/Player.h"
-/**
- * @file Orders.cpp
- * @brief This file contains the implementation of various order types for a strategy game.
- * It includes classes such as OrdersList, Advance, Airlift, Blockade, Bomb, Deploy, and Negotiate,
- * each representing a different type of game action.
- */
 
 // -----------------------------------------------------------------------------------------------------------------
 //
@@ -16,12 +10,6 @@
 //                                                Orders
 //
 // -----------------------------------------------------------------------------------------------------------------
-/**
- * @brief Overload the << operator for outputting Order objects.
- * @param stream The output stream.
- * @param o The Order object to be outputted.
- * @return Returns the modified output stream.
- */
 std::ostream &operator<<(std::ostream &stream, const Order &o) { return o.orderCout(stream); }
 
 
@@ -37,20 +25,12 @@ std::ostream &operator<<(std::ostream &stream, const Order &o) { return o.orderC
 /**
  * Destructor
  */
-/**
- * @brief Destructor for the OrdersList class.
- * Cleans up the dynamically allocated orders and detaches the observer if a game is associated.
- */
 OrdersList::~OrdersList(){
   for(auto order: orders){ delete order; }
   if(game){Subject::detach((ILogObserver* )game->getLogObserver());}
 }
 
-/**
- * @brief Copy constructor for the OrdersList class.
- * Performs a deep copy of the order list from another OrdersList instance.
- * @param oldList The OrdersList instance to be copied.
- */
+// Copy constructor to make deep copy of the order list
 OrdersList::OrdersList(const OrdersList &oldList)
  : Subject(oldList) {
   unsigned listLength = oldList.orders.size();
@@ -61,22 +41,14 @@ OrdersList::OrdersList(const OrdersList &oldList)
   for (unsigned o = 0; o < listLength; o++) { orders[o] = oldList.orders[o]->clone(); }
 }
 
-/**
- * @brief Adds an Order to the order list.
- * Throws a runtime error if a nullptr is passed.
- * @param o Pointer to the Order object to be added.
- */
+// Method adding order to the order list vector
 void OrdersList::add(Order *o)
 {
   if(o){ orders.push_back(o); } else { throw std::runtime_error("Inserting a nullptr in OrderList."); }
   Subject::notify(this);
 }
 
-/**
- * @brief Removes an Order from the order list at a specified position.
- * Throws a runtime error if the list is empty or if the position is invalid.
- * @param pos The position of the Order in the list to be removed.
- */
+// method that removes an order
 void OrdersList::remove(int pos)
 {
   unsigned listLength = orders.size();
@@ -97,12 +69,7 @@ void OrdersList::remove(int pos)
   }
 }
 
-/**
- * @brief Moves an Order within the list from one position to another.
- * Throws a runtime error if positions are invalid or if the list is empty.
- * @param pos1 The original position of the Order.
- * @param pos2 The new position of the Order.
- */
+// method moving the orders positions
 void OrdersList::move(int pos1, int pos2)
 {
   // checks number of orders in order list to make sure the move is valid
@@ -129,10 +96,7 @@ void OrdersList::move(int pos1, int pos2)
   }
 }
 
-/**
- * @brief Executes all Orders in the order list.
- * Throws a runtime error if the order list is empty.
- */
+// order executer method
 void OrdersList::execute()
 {
   unsigned listLength = orders.size();
@@ -149,12 +113,7 @@ void OrdersList::execute()
   }
 }
 
-/**
- * @brief Overloads the assignment operator for the OrdersList class.
- * Performs a deep copy of the orders from another OrdersList instance.
- * @param copyList The OrdersList instance to be copied.
- * @return Returns a reference to the copied OrdersList.
- */
+// OrdersList class assignment operator
 OrdersList &OrdersList::operator=(const OrdersList &copyList)
 {
   // let go of left hand side memory and deep copy to right hand side
@@ -180,20 +139,10 @@ OrdersList &OrdersList::operator=(const OrdersList &copyList)
   return *this;
 }
 
-/**
- * @brief Gets the size of the order list.
- * @return Returns the number of Orders in the list.
- */
 size_t OrdersList::getOrdersListSize()
 {
     return orders.size();
 }
-
-/**
- * @brief Retrieves an Order from the order list at a specific index.
- * @param index The index of the Order to retrieve.
- * @return Returns a pointer to the Order at the specified index or nullptr if the index is invalid.
- */
 Order* OrdersList::getOrder(int index)
 {
     if(index < orders.size() && index >= 0)
@@ -203,12 +152,7 @@ Order* OrdersList::getOrder(int index)
     return nullptr;
 }
 
-/**
- * @brief Overloads the << operator for outputting OrdersList objects.
- * @param stream The output stream.
- * @param ol The OrdersList object to be outputted.
- * @return Returns the modified output stream.
- */
+// print out the order list
 std::ostream &operator<<(std::ostream &stream, const OrdersList &ol)
 {
   unsigned listLength = ol.orders.size();
@@ -225,12 +169,7 @@ std::vector<Order *> *OrdersList::getList() {
   return &this->orders;
 }
 
-/**
- * @brief Determines the type of an Order object.
- * Throws a runtime error if the Order object is null.
- * @param o Pointer to the Order object whose type is to be determined.
- * @return Returns a string representing the type of the Order.
- */
+
 std::string OrdersList::castOrderType(Order * o){
   if(auto advance = dynamic_cast<Advance*>(o)){
       return advance->getLabel();
@@ -253,10 +192,6 @@ std::string OrdersList::castOrderType(Order * o){
   throw std::runtime_error("OrderList::Error Order is null");
 }
 
-/**
- * @brief Converts the most recent Order in the list to a string for logging purposes.
- * @return Returns a string representing the most recent Order.
- */
 std::string OrdersList::stringToLog() {
   Order &o = *orders.back();
   std::string orderType = castOrderType(&o);
@@ -278,39 +213,16 @@ OrdersList::OrdersList(GameEngine *gameEngine) : game(gameEngine) {
 //                                                Advance
 //
 // -----------------------------------------------------------------------------------------------------------------
-
-/**
- * @brief Constructor for the Advance class.
- * Initializes an Advance order with game engine, source and target territories, current player, and army amount.
- * @param game Pointer to the GameEngine.
- * @param source Pointer to the source Territory.
- * @param target Pointer to the target Territory.
- * @param currentPlayer Pointer to the current Player.
- * @param amount The number of armies involved in the Advance order.
- */
 Advance::Advance(GameEngine* game, Territory* source, Territory* target, Player* currentPlayer, int amount) : source(source), target(target), currentPlayer(currentPlayer), amount(amount), game(game){
   Subject::attach((ILogObserver*)game->getLogObserver());
 }
 
-/**
- * @brief Outputs the Advance order details to the provided stream.
- * @param output The output stream.
- * @return Returns the modified output stream.
- */
 std::ostream &Advance::orderCout(std::ostream &output) const { return output << "-> Advance order."; }
 
-/**
- * @brief Retrieves the label of the Advance order.
- * @return Returns a string representing the label of the Advance order.
- */
 std::string Advance::getLabel() const { return label; }
 
 const std::string Advance::label = "Advance";
 
-/**
- * @brief Validates the Advance order based on game rules.
- * @return Returns true if the order is valid, false otherwise.
- */
 bool Advance::validate() const
 {
   std::cout << "-> Advance order validation check" << std::endl;
@@ -339,9 +251,6 @@ bool Advance::validate() const
   return true;
 }
 
-/**
- * @brief Executes the Advance order if it is valid.
- */
 void Advance::execute()
 {
     if (validate())
@@ -366,16 +275,8 @@ void Advance::execute()
     }
 }
 
-/**
- * @brief Clones the Advance order.
- * @return Returns a new Advance order object that is a clone of the current object.
- */
 Order *Advance::clone() const { return new Advance(*this); }
 
-/**
- * @brief Converts the Advance order to a string for logging purposes.
- * @return Returns a string representing the Advance order.
- */
 std::string Advance::stringToLog() {
   std::stringstream ss;
   ss << "ORDER: ";
@@ -384,18 +285,6 @@ std::string Advance::stringToLog() {
   return ss.str();
 }
 
-/**
- * @brief Simulates an attack in the game, managing army movements and battle outcomes.
- *
- * This function simulates an attack from a source territory to a target territory. It involves
- * calculating success rates for both attacking and defending armies, updating army counts,
- * and handling territory ownership changes based on the outcome of the attack.
- *
- * @param pSource Pointer to the source territory from which the attack is initiated.
- * @param pTarget Pointer to the target territory being attacked.
- * @param pCurrentPlayer Pointer to the player performing the attack.
- * @param army Number of armies involved in the attack.
- */
 void Advance::attackSimulation(Territory* pSource, Territory* pTarget, Player* pCurrentPlayer, int army) {
   pSource->setArmies(pSource->getArmies() - army); // Attackers leave home territory
 
@@ -474,12 +363,6 @@ void Advance::attackSimulation(Territory* pSource, Territory* pTarget, Player* p
     pTarget->setPlayer(nullptr);
   }
 }
-
-/**
- * @brief Destructor for the Advance class.
- *
- * Detaches the log observer from the game instance, if it exists.
- */
 Advance::~Advance() {
   if(game){ Subject::detach((ILogObserver* )game->getLogObserver()); }
 }
@@ -491,45 +374,18 @@ Advance::~Advance() {
 //                                                Airlift
 //
 // -----------------------------------------------------------------------------------------------------------------
-/**
- * @brief Constructs an Airlift order with the specified parameters.
- *
- * This constructor initializes an Airlift order, attaching a log observer to the game instance.
- *
- * @param game Pointer to the game engine.
- * @param source Pointer to the source territory for the airlift.
- * @param target Pointer to the target territory for the airlift.
- * @param currentPlayer Pointer to the player issuing the order.
- * @param amount Number of armies to be airlifted.
- */
+
+
 Airlift::Airlift(GameEngine* game, Territory* source, Territory* target, Player* currentPlayer, int amount) : source(source), target(target), currentPlayer(currentPlayer), amount(amount), game(game){
   Subject::attach((ILogObserver*)game->getLogObserver());
 }
 
 const std::string Airlift::label = "Airlift";
 
-/**
- * @brief Returns the label of the Airlift order.
- * 
- * @return A string representing the label of the Airlift order.
- */
 std::string Airlift::getLabel() const { return label; }
 
-/**
- * @brief Outputs the Airlift order details to an output stream.
- * 
- * @param output The output stream.
- * @return A reference to the output stream.
- */
 std::ostream &Airlift::orderCout(std::ostream &output) const { return output << "-> Airlift order."; }
 
-/**
- * @brief Validates the Airlift order.
- * 
- * Checks if the Airlift order is valid based on the game state, such as ownership of territories and army counts.
- * 
- * @return True if the order is valid, false otherwise.
- */
 bool Airlift::validate() const
 {
   std::cout << "-> Airlift order validation check" << std::endl;
@@ -550,11 +406,6 @@ bool Airlift::validate() const
   return true;
 }
 
-/**
- * @brief Executes the Airlift order.
- * 
- * Transfers armies from the source territory to the target territory if the order is valid.
- */
 void Airlift::execute()
 {
   if (validate()) {
@@ -574,19 +425,8 @@ void Airlift::execute()
   }
 }
 
-
-/**
- * @brief Creates a clone of the Airlift order.
- * 
- * @return A pointer to the cloned Airlift order.
- */
 Order *Airlift::clone() const { return new Airlift(*this); }
 
-/**
- * @brief Generates a string representation of the Airlift order for logging purposes.
- * 
- * @return A string representing the executed Airlift order.
- */
 std::string Airlift::stringToLog() {
   std::stringstream ss;
   ss << "ORDER: ";
@@ -594,12 +434,6 @@ std::string Airlift::stringToLog() {
   ss << *this;
   return ss.str();
 }
-
-/**
- * @brief Destructor for the Airlift class.
- *
- * Detaches the log observer from the game instance, if it exists.
- */
 Airlift::~Airlift() {
   if(game){ Subject::detach((ILogObserver* )game->getLogObserver()); }
 }
@@ -611,35 +445,18 @@ Airlift::~Airlift() {
 //                                                Blockade
 //
 // -----------------------------------------------------------------------------------------------------------------
-/**
- * @class Blockade
- * @brief Represents a Blockade order in the game.
- *
- * The Blockade order triples the number of armies on a territory and then makes it neutral.
- */
+
+
 Blockade::Blockade(GameEngine* game, Territory* target, Player* currentPlayer) : target(target), currentPlayer(currentPlayer), game(game){
   Subject::attach((ILogObserver*)game->getLogObserver());
 }
 
 const std::string Blockade::label = "Blockade";
 
-/**
- * @brief Get the label of the Blockade order.
- * @return The label of the Blockade order.
- */
 std::string Blockade::getLabel() const { return label; }
 
-/**
- * @brief Output the Blockade order to the output stream.
- * @param output The output stream.
- * @return The output stream.
- */
 std::ostream &Blockade::orderCout(std::ostream &output) const { return output << "-> Blockade order."; }
 
-/**
- * @brief Validate the Blockade order.
- * @return True if the order is valid, false otherwise.
- */
 bool Blockade::validate() const
 {
   std::cout << "-> Blockade order validation check" << std::endl;
@@ -652,9 +469,6 @@ bool Blockade::validate() const
   return true;
 }
 
-/**
- * @brief Execute the Blockade order.
- */
 void Blockade::execute()
 {
   if (validate()) {
@@ -669,16 +483,8 @@ void Blockade::execute()
   }
 }
 
-/**
- * @brief Clone the Blockade order.
- * @return A pointer to the cloned Blockade order.
- */
 Order *Blockade::clone() const { return new Blockade(*this); }
 
-/**
- * @brief Convert the Blockade order to a string for logging purposes.
- * @return The string representation of the Blockade order.
- */
 std::string Blockade::stringToLog() {
   std::stringstream ss;
   ss << "ORDER: ";
@@ -705,23 +511,10 @@ Bomb::Bomb(GameEngine* game, Territory* target, Player* currentPlayer) : target(
 
 const std::string Bomb::label = "Bomb";
 
-/**
- * @brief Get the label of the Bomb order.
- * @return The label of the Bomb order.
- */
 std::string Bomb::getLabel() const { return label; }
 
-/**
- * @brief Output the Bomb order to the output stream.
- * @param output The output stream.
- * @return The output stream.
- */
 std::ostream &Bomb::orderCout(std::ostream &output) const { return output << "-> Bomb order."; }
 
-/**
- * @brief Validate the Bomb order.
- * @return True if the order is valid, false otherwise.
- */
 bool Bomb::validate() const
 {
   std::cout << "-> Bomb order validation check" << std::endl;
@@ -734,9 +527,6 @@ bool Bomb::validate() const
   return true;
 }
 
-/**
- * @brief Execute the Bomb order.
- */
 void Bomb::execute()
 {
 
@@ -760,16 +550,8 @@ void Bomb::execute()
   }
 }
 
-/**
- * @brief Clone the Bomb order.
- * @return A pointer to the cloned Bomb order.
- */
 Order *Bomb::clone() const { return new Bomb(*this); }
 
-/**
- * @brief Convert the Bomb order to a string for logging purposes.
- * @return The string representation of the Bomb order.
- */
 std::string Bomb::stringToLog() {
   std::stringstream ss;
   ss << "ORDER: ";
@@ -797,23 +579,10 @@ Deploy::Deploy(GameEngine* game, Territory* target, Player* currentPlayer, int a
 
 const std::string Deploy::label = "Deploy";
 
-/**
- * @brief Get the label of the Deploy order.
- * @return The label of the Deploy order.
- */
 std::string Deploy::getLabel() const { return label; }
 
-/**
- * @brief Output the Deploy order to the output stream.
- * @param output The output stream.
- * @return The output stream.
- */
 std::ostream &Deploy::orderCout(std::ostream &output) const { return output << "-> Deploy order."; }
 
-/**
- * @brief Validate the Deploy order.
- * @return True if the order is valid, false otherwise.
- */
 bool Deploy::validate() const
 {
   std::cout << "-> Deploy order validation check" << std::endl;
@@ -837,9 +606,6 @@ bool Deploy::validate() const
   return true;
 }
 
-/**
- * @brief Execute the Deploy order.
- */
 void Deploy::execute()
 {
   if (validate()) {
@@ -851,16 +617,8 @@ void Deploy::execute()
   }
 }
 
-/**
- * @brief Clone the Deploy order.
- * @return A pointer to the cloned Deploy order.
- */
 Order *Deploy::clone() const { return new Deploy(*this); }
 
-/**
- * @brief Convert the Deploy order to a string for logging purposes.
- * @return The string representation of the Deploy order.
- */
 std::string Deploy::stringToLog() {
   std::stringstream ss;
   ss << "ORDER: ";
@@ -881,31 +639,14 @@ Deploy::~Deploy() {
 // -----------------------------------------------------------------------------------------------------------------
 
 
-/**
- * @class Negotiate
- * @brief Represents a Negotiate order in the game.
- *
- * The Negotiate order establishes a friendly relationship between two players.
- */
 Negotiate::Negotiate(GameEngine* game, Player* targetPlayer, Player* currentPlayer) : targetPlayer(targetPlayer), currentPlayer(currentPlayer), game(game){
   Subject::attach((ILogObserver*)game->getLogObserver());
 }
 
 const std::string Negotiate::label = "Negotiate";
 
-/**
- * @brief Get the label of the Negotiate order.
- * @return The label of the Negotiate order.
- */
 std::string Negotiate::getLabel() const { return label; }
 
-/**
- * @brief Validates the Negotiate order.
- * 
- * Checks if the Negotiate order is valid based on the game state, such as the players involved.
- * 
- * @return True if the order is valid, false otherwise.
- */
 bool Negotiate::validate() const
 {
   std::cout << "-> Negotiate order validation check" << std::endl;
@@ -918,9 +659,6 @@ bool Negotiate::validate() const
   return true;
 }
 
-/**
- * @brief Execute the Negotiate order.
- */
 void Negotiate::execute()
 {
   if (validate()) {
@@ -933,25 +671,12 @@ void Negotiate::execute()
 }
 
 
-/**
- * @brief Clone the Negotiate order.
- * @return A pointer to the cloned Negotiate order.
- */
 Order *Negotiate::clone() const { return new Negotiate(*this); }
 
-/**
- * @brief Output the Negotiate order to the output stream.
- * @param ostream The output stream.
- * @return The output stream.
- */
 std::ostream &Negotiate::orderCout(std::ostream &ostream) const {
   return ostream << "-> Negotiate order.";
 }
 
-/**
- * @brief Convert the Negotiate order to a string for logging purposes.
- * @return The string representation of the Negotiate order.
- */
 std::string Negotiate::stringToLog() {
   std::stringstream ss;
   ss << "ORDER: ";

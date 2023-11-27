@@ -58,7 +58,10 @@ set(GAME_LIB_SRCS
         src/GameEngine/GameEngineDriver.h
         src/GameEngine/GameEngine.cpp
         src/GameEngine/GameEngine.h
-        src/Logger/LogObserver.cpp src/Logger/LogObserver.h src/Logger/LoggingObserverDriver.cpp src/Logger/LoggingObserverDriver.h
+        src/Logger/LogObserver.cpp
+        src/Logger/LogObserver.h
+        src/Logger/LoggingObserverDriver.cpp
+        src/Logger/LoggingObserverDriver.h
 
         # CommandProcessing
         src/GameEngine/Command/Command.cpp
@@ -72,12 +75,16 @@ set(GAME_LIB_SRCS
         src/GameEngine/CommandFile/FileLineReader.cpp
         src/GameEngine/CommandFile/FileLineReader.h
 
+        # Strategies
+        src/Player/PlayerStrategies.cpp
+        src/Player/PlayerStrategies.h
 
-)
+        # Tournaments
+        src/GameEngine/TournamentDriver.cpp
+        src/GameEngine/TournamentDriver.h)
+
 add_library(Game STATIC ${GAME_LIB_SRCS})
-target_include_directories(Game PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
+target_include_directories(Game PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 
 
@@ -127,6 +134,12 @@ add_test(NAME MapTests COMMAND testRunnerMap)
 add_executable(testRunnerLogger test/Logger/TEST_Logger.cpp)
 target_link_libraries(testRunnerLogger gtest_main gmock_main Game)
 add_test(NAME LoggerTests COMMAND testRunnerLogger)
+
+
+
+# ---------------------------------------------------------
+# Maps
+# ---------------------------------------------------------
 
 # When Res is modified, rerun cmake (to copy new files to binary out)
 file(COPY res DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
