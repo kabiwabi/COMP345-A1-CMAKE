@@ -1,0 +1,1 @@
+tournament -M res/TestMap4_valid.map -P Aggressive Benevolent -G 5 -D 10
