@@ -4,4 +4,10 @@
 
 #include "Cards/Cards.h"
 
-void testCards(int argc, char** argv);
+/**
+ * @brief Function to test the Cards module.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line arguments.
+ */
+void testCards(int argc, char **argv);

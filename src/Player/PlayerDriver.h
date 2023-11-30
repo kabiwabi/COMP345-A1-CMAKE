@@ -1,5 +1,8 @@
 #pragma once
 #include "Player/Player.h"
 #include <iostream>
-// test function for main driver
+
+/**
+ * @brief Test function for the main driver to test the Player class.
+ */
 void testPlayers();

@@ -16,10 +16,14 @@ class GameEngine;
 //
 // ----------------------------------------------------------------------------------------------------------------
 
-class ILoggable {
+/**
+ * @brief Interface for objects that can be logged.
+ */
+class ILoggable
+{
 public:
   virtual std::string stringToLog() = 0;
-  virtual ~ILoggable()= default;
+  virtual ~ILoggable() = default;
 };
 
 // -----------------------------------------------------------------------------------------------------------------
@@ -29,12 +33,16 @@ public:
 //
 // ----------------------------------------------------------------------------------------------------------------
 
-class ISubject {
+/**
+ * @brief Interface for the subject in the observer pattern.
+ */
+class ISubject
+{
 public:
   virtual ~ISubject() = default;
-  virtual void attach(ILogObserver* observer) = 0;
-  virtual void detach(ILogObserver* observer) = 0;
-  virtual void notify(ILoggable*) = 0;
+  virtual void attach(ILogObserver *observer) = 0;
+  virtual void detach(ILogObserver *observer) = 0;
+  virtual void notify(ILoggable *) = 0;
   virtual void resetObservers() = 0;
 };
 
@@ -45,18 +53,22 @@ public:
 //
 // ----------------------------------------------------------------------------------------------------------------
 
-class Subject : ISubject {
+/**
+ * @brief Concrete implementation of the subject in the observer pattern.
+ */
+class Subject : ISubject
+{
 private:
-  std::vector<ILogObserver*> observers;
+  std::vector<ILogObserver *> observers;
+
 public:
   Subject() = default;
   ~Subject() override = default;
 
-  void attach(ILogObserver* observer) override;
-  void detach(ILogObserver* observer) override;
-  void notify(ILoggable*) override;
+  void attach(ILogObserver *observer) override;
+  void detach(ILogObserver *observer) override;
+  void notify(ILoggable *) override;
   void resetObservers() override;
-
 };
 
 // -----------------------------------------------------------------------------------------------------------------
@@ -66,12 +78,15 @@ public:
 //
 // ----------------------------------------------------------------------------------------------------------------
 
-class ILogObserver {
+/**
+ * @brief Interface for log observers.
+ */
+class ILogObserver
+{
 public:
   virtual ~ILogObserver() = default;
-  virtual void update(ILoggable*) = 0;
+  virtual void update(ILoggable *) = 0;
 };
-
 
 // -----------------------------------------------------------------------------------------------------------------
 //
@@ -80,24 +95,26 @@ public:
 //
 // ----------------------------------------------------------------------------------------------------------------
 
-class LogObserver : ILogObserver {
+/**
+ * @brief Concrete implementation of a log observer.
+ */
+class LogObserver : ILogObserver
+{
 private:
-    // Object Owner
-    GameEngine* game;
+  // Object Owner
+  GameEngine *game;
 
 public:
+  // Constructors
+  explicit LogObserver(GameEngine *);
+  ~LogObserver() override = default;
+  explicit LogObserver(LogObserver *);
 
-    // Constructors
-    explicit LogObserver(GameEngine*);
-    ~LogObserver() override = default;
-    explicit LogObserver(LogObserver*);
+  void update(ILoggable *) override;
 
-    void update(ILoggable*) override;
+  // Stream Operator
+  friend std::ostream &operator<<(std::ostream &out, const LogObserver &log);
 
-    // Stream Operator
-    friend std::ostream &operator << (std::ostream &out, const LogObserver &log);
-
-    // Assignment Operator
-    LogObserver& operator=(const LogObserver &other);
-
+  // Assignment Operator
+  LogObserver &operator=(const LogObserver &other);
 };

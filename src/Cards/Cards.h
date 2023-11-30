@@ -16,9 +16,10 @@ class Player;
 using namespace std;
 
 // --------------------------------
-// enum for type of card (public)
+// Enum for the type of card (public)
 // --------------------------------
-enum CardType: int {
+enum CardType : int
+{
   CT_Bomb = 0,
   CT_Reinforcement,
   CT_Blockade,
@@ -26,101 +27,231 @@ enum CardType: int {
   CT_Diplomacy
 };
 
+/**
+ * @brief Class representing a Card in the game.
+ */
 class Card
 {
 private:
-  //type of each card
+  /** @brief Type of each card. */
   CardType cardType;
 
-  // Object Owner
-  GameEngine* game;
+  /** @brief Object owner (GameEngine). */
+  GameEngine *game;
 
 public:
   // --------------------------------
   // Play Card
   // --------------------------------
+  /**
+   * @brief Executes the action associated with playing the card.
+   */
   void play();
 
   // --------------------------------
   // Constructors
   // --------------------------------
-  explicit Card(const CardType& type, GameEngine* game);
+  /**
+   * @brief Constructor for Card class.
+   *
+   * @param type Type of the card.
+   * @param game Pointer to the GameEngine object.
+   */
+  explicit Card(const CardType &type, GameEngine *game);
+
+  /**
+   * @brief Copy constructor for Card class.
+   *
+   * @param initial The Card object to be copied.
+   */
   Card(const Card &initial);
 
   // --------------------------------
   // Destructor
   // --------------------------------
+  /**
+   * @brief Destructor for Card class.
+   */
   ~Card();
 
   // --------------------------------
   // Setters + Getters
   // --------------------------------
-  void setCardType(const CardType& type);
+  /**
+   * @brief Sets the type of the card.
+   *
+   * @param type Type of the card.
+   */
+  void setCardType(const CardType &type);
+
+  /**
+   * @brief Gets the type of the card.
+   *
+   * @return Type of the card.
+   */
   CardType getCardType() const;
+
+  /**
+   * @brief Gets the string representation of the card type.
+   *
+   * @return String representation of the card type.
+   */
   std::string getCardTypeString();
 
   // --------------------------------
   // Static Method to Map CardType Enum to String
   // --------------------------------
-  static std::string CardTypeToString(CardType& c);
+  /**
+   * @brief Maps CardType enum to its string representation.
+   *
+   * @param c CardType enum value.
+   * @return String representation of the CardType.
+   */
+  static std::string CardTypeToString(CardType &c);
 };
 
-
-
+/**
+ * @brief Class representing a Hand of cards for a player.
+ */
 class Hand
 {
 private:
-  //hand pointer vector
+  /** @brief Vector of pointers to Card objects. */
+  std::vector<Card *> handCards;
 
 public:
-  std::vector<Card *> handCards;
-  //default constructor
+  // --------------------------------
+  // Constructors
+  // --------------------------------
+  /**
+   * @brief Default constructor for Hand class.
+   */
   Hand();
-  //destruct
-  ~Hand();
-  //hand copy constructor
-  Hand(const Hand &initial);
-  // getter handCards
-  std::vector<Card *>* getCards();
-  // get card from handCards
-  Card* getCardFromHand(int index);
-  // add to handCards
-  void addToHand(Card* card);
-  // remove & delete from handCards (once the card is used, it should be deleted)
-  Card* removeCard(CardType);
 
-  std::vector<Card *>* getHandCards() { return &handCards; }
+  /**
+   * @brief Destructor for Hand class.
+   */
+  ~Hand();
+
+  /**
+   * @brief Copy constructor for Hand class.
+   *
+   * @param initial The Hand object to be copied.
+   */
+  Hand(const Hand &initial);
+
+  // --------------------------------
+  // Public Methods
+  // --------------------------------
+  /**
+   * @brief Gets the vector of pointers to Card objects in the hand.
+   *
+   * @return Vector of pointers to Card objects.
+   */
+  std::vector<Card *> *getCards();
+
+  /**
+   * @brief Gets a specific card from the hand based on its index.
+   *
+   * @param index Index of the card in the hand.
+   * @return Pointer to the Card object.
+   */
+  Card *getCardFromHand(int index);
+
+  /**
+   * @brief Adds a card to the hand.
+   *
+   * @param card Pointer to the Card object to be added.
+   */
+  void addToHand(Card *card);
+
+  /**
+   * @brief Removes and deletes a card from the hand.
+   *
+   * Once the card is used, it should be deleted.
+   *
+   * @param type Type of the card to be removed.
+   * @return Pointer to the removed Card object.
+   */
+  Card *removeCard(CardType type);
+
+  /**
+   * @brief Gets the vector of pointers to Card objects in the hand.
+   *
+   * @return Vector of pointers to Card objects.
+   */
+  std::vector<Card *> *getHandCards();
 };
 
-
-
-
-
+/**
+ * @brief Class representing a Deck of cards in the game.
+ */
 class Deck
 {
 private:
-  //deck pointer vector
+  /** @brief Vector of pointers to Card objects. */
   std::vector<Card *> deckCards;
-  // Object Owner
-  GameEngine* game;
+
+  /** @brief Object owner (GameEngine). */
+  GameEngine *game;
 
 public:
-  explicit Deck(GameEngine*);
-  //destruct
-  ~Deck();
-  //random card drawer to players hand from remaining deck hand method
-  void draw(Hand& currentHand);
-  //deck copy constructor
-  Deck(const Deck &initial);
-  //deck of hand shuffler method
-  void shuffleDeck();
-  // get deck hand
-  std::vector<Card *> * getDeckCards();
-  // add card to deck
-  void addCardToDeck(Card* card);
-  void create_deck();
-private:
-  // removes card from deck at random
-  Card* removeCardRandom();
-};
+  // --------------------------------
+  // Constructors
+  // --------------------------------
+  /**
+   * @brief Constructor for Deck class.
+   *
+   * @param game Pointer to the GameEngine object.
+   */
+  explicit Deck(GameEngine *);
 
+  /**
+   * @brief Destructor for Deck class.
+   */
+  ~Deck();
+
+  /**
+   * @brief Copy constructor for Deck class.
+   *
+   * @param initial The Deck object to be copied.
+   */
+  Deck(const Deck &initial);
+
+  // --------------------------------
+  // Public Methods
+  // --------------------------------
+  /**
+   * @brief Draws a random card from the deck to the player's hand.
+   *
+   * @param currentHand Reference to the Hand object of the player.
+   */
+  void draw(Hand &currentHand);
+
+  /**
+   * @brief Gets the vector of pointers to Card objects in the deck.
+   *
+   * @return Vector of pointers to Card objects.
+   */
+  std::vector<Card *> *getDeckCards();
+
+  /**
+   * @brief Adds a card to the deck.
+   *
+   * @param card Pointer to the Card object to be added.
+   */
+  void addCardToDeck(Card *card);
+
+  /**
+   * @brief Creates the initial deck of cards for the game.
+   */
+  void create_deck();
+
+private:
+  /**
+   * @brief Removes a card from the deck at random.
+   *
+   * @return Pointer to the removed Card object.
+   */
+  Card *removeCardRandom();
+};

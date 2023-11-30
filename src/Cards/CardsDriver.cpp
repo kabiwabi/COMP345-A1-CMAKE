@@ -3,10 +3,16 @@
 
 using namespace std;
 
-void testCards(int argc, char** argv) {
+/**
+ * @brief Test function for the Cards module.
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line argument strings.
+ */
+void testCards(int argc, char **argv)
+{
   auto gameEngine = new GameEngine(argc, argv);
   auto player = new Player(gameEngine, new Hand(), "name", "Aggressive");
-  Deck* deck = gameEngine->getDeck();
+  Deck *deck = gameEngine->getDeck();
 
   cout << "-> Adding 10 cards to deck..." << endl;
   // initialize deck (10 cards)
@@ -22,12 +28,11 @@ void testCards(int argc, char** argv) {
   deck->addCardToDeck(new Card(CT_Blockade, gameEngine));
   deck->addCardToDeck(new Card(CT_Airlift, gameEngine));
 
-
   cout << "-> shuffling deck..." << endl;
-  //Creating a deck of all hand mixed
+  // Creating a deck of all hand mixed
   deck->shuffleDeck();
 
-  //getting the hand obj
+  // getting the hand obj
   auto player_hand = player->getHand();
 
   cout << "-> player draws 4 cards" << endl;
@@ -39,8 +44,9 @@ void testCards(int argc, char** argv) {
 
   cout << "-> Card in player's hand" << endl;
 
-  for (auto handCard : *player_hand->getHandCards()) {
-      cout << handCard->getCardType() << endl;
+  for (auto handCard : *player_hand->getHandCards())
+  {
+    cout << handCard->getCardType() << endl;
   }
 
   cout << "-> Number of Cards in Deck: " << deck->getDeckCards()->size() << endl;
@@ -49,10 +55,9 @@ void testCards(int argc, char** argv) {
   cout << "-> Player Plays a card" << endl;
   gameEngine->setCurrentPlayer(player);
   // play most left hand size card
-  Card* card_to_play = player_hand->getHandCards()->at(0);
+  Card *card_to_play = player_hand->getHandCards()->at(0);
   card_to_play->play();
 
   cout << "-> Number of Cards in Deck: " << deck->getDeckCards()->size() << endl;
   cout << "-> Number of Cards in Player's hand: " << player_hand->getHandCards()->size() << endl;
-
 }

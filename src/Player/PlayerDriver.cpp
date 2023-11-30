@@ -1,16 +1,22 @@
 #include "PlayerDriver.h"
 
-void testPlayers(){
-
+/**
+ * @brief Test function for Player class functionality.
+ *
+ * This function tests various aspects of the Player class, such as adding and removing territories,
+ * getting territories to defend and attack, stream insertion overload, and issuing an Airlift order.
+ */
+void testPlayers()
+{
   // mocking argc and argv
   int argc = 1;
-  char* argv[] = {(char*)"-console"};
+  char *argv[] = {(char *)"-console"};
   // setting up game engine
   auto gameEngine = new GameEngine(argc, argv);
   // creating player
   auto p = new Player(gameEngine, new Hand(), "Bob", "Aggressive");
 
-  // loading map to get access of territories
+  // loading map to get access to territories
   gameEngine->loadMap("res/TestMap1_valid.map");
   auto map_territories = gameEngine->getMap()->getTerritories();
 
@@ -27,7 +33,8 @@ void testPlayers(){
 
   std::cout << "All 4: " << std::endl;
 
-  for(auto t: *p->getTerritories()){
+  for (auto t : *p->getTerritories())
+  {
     std::cout << t->getName() << std::endl;
   }
 
@@ -36,16 +43,17 @@ void testPlayers(){
 
   std::cout << "After Removing last one: " << std::endl;
 
-  for(auto t: *p->getTerritories()){
+  for (auto t : *p->getTerritories())
+  {
     std::cout << t->getName() << std::endl;
   }
-
 
   std::cout << "\n " << std::endl;
   std::cout << "Defending Territories: " << std::endl;
   // printing defended territories
   auto defend = p->toDefend();
-  for(auto d: defend){
+  for (auto d : defend)
+  {
     std::cout << d->getName() << std::endl;
   }
 
@@ -54,7 +62,8 @@ void testPlayers(){
 
   // printing attack territories
   auto attack = p->toAttack();
-  for(auto a: attack){
+  for (auto a : attack)
+  {
     std::cout << a->getName() << std::endl;
   }
 
