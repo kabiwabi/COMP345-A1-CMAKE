@@ -1,3 +1,4 @@
+#include <cstring>
 #include "GameEngine/GameEngineDriver.h"
 #include "Orders/OrdersDriver.h"
 #include "GameEngine/Command/CommandProcessingDriver.h"
@@ -9,16 +10,29 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-  testTournament(argc, argv);
+    bool runTests = false;
 
-//  std::cout << std::endl;
-//  testGameLoop(argc, argv);
-//  std::cout << std::endl;
-//  testCommandProcessor(argc, argv);
-//  testStartupPhase(argc, argv);
-//  testOrderExecution();
-//  std::cout << std::endl;
-//  testLoggingObserver(argc, argv);
-  return 0;
+    // Check if the -test argument is passed
+    for(int i = 1; i < argc; i++)
+    {
+        if(strcmp(argv[i], "-test") == 0)
+        {
+            runTests = true;
+            break;
+        }
+    }
+
+    if(runTests)
+    {
+        // Run the tests
+        testTournament(argc, argv);
+
+    }
+    else
+    {
+        // Run the game normally
+        testGameLoop(argc, argv);
+    }
+
+    return 0;
 }
-
