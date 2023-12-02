@@ -78,6 +78,8 @@ set(GAME_LIB_SRCS
         # Strategies
         src/Player/PlayerStrategies.cpp
         src/Player/PlayerStrategies.h
+        src/Player/PlayerStrategiesDriver.cpp
+        src/Player/PlayerStrategiesDriver.h
 
         # Tournaments
         src/GameEngine/TournamentDriver.cpp

@@ -5,6 +5,7 @@
 #include "Logger/LoggingObserverDriver.h"
 #include "GameEngine/TournamentDriver.h"
 #include "Player/PlayerDriver.h"
+#include "Player/PlayerStrategiesDriver.h"
 
 using namespace std;
 
@@ -21,6 +22,9 @@ int main(int argc, char** argv)
             break;
         }
     }
+
+    // We can uncomment this for testing
+    //testPlayerStrategies();
 
     if(runTests)
     {
