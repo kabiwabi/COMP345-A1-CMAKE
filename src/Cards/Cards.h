@@ -180,7 +180,7 @@ public:
    *
    * @return Vector of pointers to Card objects.
    */
-  std::vector<Card *> *getHandCards();
+  std::vector<Card *>* getHandCards() { return &handCards; }
 };
 
 /**
@@ -227,6 +227,9 @@ public:
    * @param currentHand Reference to the Hand object of the player.
    */
   void draw(Hand &currentHand);
+
+    //deck of hand shuffler method
+    void shuffleDeck();
 
   /**
    * @brief Gets the vector of pointers to Card objects in the deck.

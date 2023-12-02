@@ -38,6 +38,8 @@ public:
      */
     std::string readCommand() override;
 
+    void commandLineToFile(FileLineReader* _flr);
+
     /**
      * @brief Overloaded << operator for FileCommandProcessorAdapter.
      *

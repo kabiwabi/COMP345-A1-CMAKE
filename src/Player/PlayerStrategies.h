@@ -66,6 +66,9 @@ public:
    */
   void issueOrder() override;
 
+    std::unordered_map<Territory*, int> deployedTroops;
+    bool isTurnDone = false;
+
   /**
    * @brief Implementation of deciding orders based on a card for a human player.
    *
@@ -92,6 +95,18 @@ public:
    * @brief Resets the state of the Human player strategy.
    */
   void reset();
+
+private:
+    bool playCard();
+
+    bool deploy();
+    bool advance();
+
+    Order* playReinforcementCard();
+    Order* playBombCard();
+    Order* playBlockadeCard();
+    Order* playDiplomacyCard();
+    Order* playAirliftCard();
 };
 
 // ----------------------------------------
@@ -127,6 +142,18 @@ public:
    * @return A vector of territories to attack.
    */
   std::vector<Territory *> toAttack() override;
+
+private:
+    void playCard();
+
+    void deploy();
+    void advance();
+
+    Order* playBombCard();
+    Order* playReinforcementCard();
+    Order* playBlockadeCard();
+    Order* playDiplomacyCard();
+    Order* playAirliftCard();
 };
 
 // ----------------------------------------
@@ -162,6 +189,11 @@ public:
    * @return A vector of territories to attack.
    */
   std::vector<Territory *> toAttack() override;
+
+    Order* playReinforcementCard();
+    Order* playBlockadeCard();
+    Order* playDiplomacyCard();
+    Order* playAirliftCard();
 };
 
 // ----------------------------------------

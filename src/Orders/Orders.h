@@ -1,5 +1,15 @@
 #pragma once
 
+#include <iostream>
+#include <sstream>
+#include "Cards/Cards.h"
+#include "Logger/LogObserver.h"
+
+class Card;
+class Player;
+class Territory;
+enum CardType : int;
+
 /**
  * @brief Abstract Order class with data members and methods to be implemented by derived classes.
  */
@@ -96,6 +106,9 @@ public:
    * @return The order at the specified index.
    */
   Order *getOrder(int index);
+
+    // Logging
+    static std::string castOrderType(Order * o);
 
   /**
    * @brief Get the vector of orders.
