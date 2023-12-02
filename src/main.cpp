@@ -23,13 +23,11 @@ int main(int argc, char** argv)
         }
     }
 
-    // We can uncomment this for testing
-    //testPlayerStrategies();
-
     if(runTests)
     {
         // Run the tests
         testTournament(argc, argv);
+        testPlayerStrategies();
     }
     else
     {
