@@ -26,12 +26,12 @@ int main(int argc, char** argv)
     {
         // Run the tests
         testTournament(argc, argv);
-
     }
     else
     {
         // Run the game normally
-        testGameLoop(argc, argv);
+        auto gameEngine = GameEngine(argc, argv);
+        gameEngine.startupPhase();
     }
 
     return 0;
